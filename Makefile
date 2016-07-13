@@ -2,10 +2,11 @@
 
 CFLAGS=-std=c++11
 
+iirfilter: iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx 
+	g++ $(CFLAGS) iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx -lpng -o iirfilter
 
-
-iir: iir_sequential.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx 
-	g++ $(CFLAGS) iir_sequential.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx -lpng -o iir-sequential
+#iirfilter-cuda: iirfilter.cu
+#	nvcc iirfilter.cu -o iirfilter-cuda
 
 all:
-	iir
+	iirfilter
