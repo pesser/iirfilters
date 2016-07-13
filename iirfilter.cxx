@@ -2,7 +2,7 @@
   Program to time Sven Peter's convolve_iir_inner_single_noavx function
   Prints time in nanoseconds
 
-  Usage: ./iir-sequential pngfile
+  Usage: ./iirfilter pngfile
  */
 
 #include "fastfilters.hxx"
@@ -18,7 +18,7 @@ int main( int argc, char* argv[] )
   // check commandline parameters
   if( argc != 2 )
     {
-      std::cout << "Usage: ./iir-sequential pngfile" << std::endl;
+      std::cout << "Usage: ./iirfilter pngfile" << std::endl;
       exit(0);
     }
       

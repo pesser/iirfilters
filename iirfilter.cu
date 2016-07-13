@@ -2,7 +2,7 @@
   Program to time functions convolving images using cuda  
   Prints time in nanoseconds
 
-  Usage: ./iir-cuda pngfile
+  Usage: ./iirfilter-cuda pngfile
  */
 
 #include "fastfilters.hxx"
@@ -27,7 +27,7 @@ int main( int argc, char* argv[] )
   // check commandline parameters
   if( argc != 2 )
     {
-      std::cout << "Usage: ./iir-cuda pngfile" << std::endl;
+      std::cout << "Usage: ./iirfilter-cuda pngfile" << std::endl;
       exit(0);
     }
       
