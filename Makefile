@@ -1,12 +1,20 @@
+CXX ?= g++
+NVCC ?= nvcc
+CCBIN ?= $(CXX)
 
+CXXFLAGS += -Wall -Wextra -std=c++11 -I.
+LDFLAGS += -lpng
+NVCCFLAGS += -ccbin=$(CCBIN) -std=c++11 -I.
 
-CFLAGS=-std=c++11
+EXECS = iirfilter iirfilter-cuda
+
+all: $(EXECS)
 
 iirfilter: iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx 
-	g++ $(CFLAGS) iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx -lpng -o iirfilter
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 iirfilter-cuda: iirfilter.cu
-	nvcc iirfilter.cu -o iirfilter-cuda
+	$(NVCC) $(NVCCFLAGS) iirfilter.cu -o iirfilter-cuda
 
-all:
-	iirfilter irrfilter-cuda
+clean:
+	rm -f $(EXECS)
