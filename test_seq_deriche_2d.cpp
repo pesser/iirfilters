@@ -1,11 +1,13 @@
 #include "image.hxx"
 #include "coefficients.h"
 #include "seq_deriche.h"
+#include "timer.h"
 #include <iostream>
 #include <iomanip>
 
 int main(int argc, char** argv)
 {
+  Timer<false> timer;
   float sigma = 5.0;
   int order = 3;
 
@@ -33,9 +35,14 @@ int main(int argc, char** argv)
 
   deriche_coeffs<float> c;
   deriche_precomp<float>(&c, sigma, order);
+
+  timer.tick();
   deriche_seq_2d<float>(
       c, output.data(), buffer_l.data(), buffer_r.data(), buffer_m.data(),
       img.data(), img.width(), img.height());
+  double time = timer.tock();
+
+  std::cout << time << std::endl;
 
   Image img_out(output.data(), img.width(), img.height());
   img_out.write(out_filename);
