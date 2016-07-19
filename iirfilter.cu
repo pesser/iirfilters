@@ -108,26 +108,38 @@ void convolve_iir_gpu( float* input, float* output, int n_cols, int n_rows,
                        fastfilters::iir::Coefficients &coefs)
 {
   cudaSetDevice(0);
-  float *d, *causal, *anticausal; 
+  float *in, *out, *d, *causal, *anticausal; 
   unsigned int n_blocks, n_threads_per_block, coefs_size;  
   cudaDeviceProp prop;
 
-  coefs_size = 4*sizeof(float);
-  cudaMalloc(&d, coefs_size);
-  cudaMalloc(&causal, coefs_size);
-  cudaMalloc(&anticausal, coefs_size);
-  cudaMemcpy(d, coefs.d.data(), coefs_size, cudaMemcpyHostToDevice);
-  cudaMemcpy(causal, coefs.n_causal.data(), coefs_size, cudaMemcpyHostToDevice);
-  cudaMemcpy(anticausal, coefs.n_anticausal.data(), coefs_size, cudaMemcpyHostToDevice);
+  data_size = n_cols * n_rows * sizeof(floats);
+  coefs_size = 4 * sizeof(float);
+  
+  cudaMalloc( &in, size );
+  cudaMalloc( &out, size );
+  cudaMalloc( &d, coefs_size );
+  cudaMalloc( &causal, coefs_size );
+  cudaMalloc( &anticausal, coefs_size );
 
-  cudaGetDeviceProperties(&prop, 0);
-  n_blocks = ceil(N_REGISTERS_CONVOLVE_ROW * n_rows / (float) prop.regsPerBlock) ; 
-  n_threads_per_block = ceil(n_rows/n_blocks);
-  convolve_row<<< n_blocks, n_threads_per_block >>>(input, output, n_rows, n_cols, (int) coefs.n_border, d, causal, anticausal);
+  cudaMemcpy( in, input, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( d, coefs.d.data(), coefs_size, cudaMemcpyHostToDevice );
+  cudaMemcpy( causal, coefs.n_causal.data(), coefs_size, cudaMemcpyHostToDevice );
+  cudaMemcpy( anticausal, coefs.n_anticausal.data(), coefs_size, cudaMemcpyHostToDevice );
 
-  cudaFree(d);
-  cudaFree(causal);
-  cudaFree(anticausal);
+  cudaGetDeviceProperties( &prop, 0 );
+  n_blocks = ceil( N_REGISTERS_CONVOLVE_ROW * n_rows / (float) prop.regsPerBlock ); 
+  n_threads_per_block = ceil( n_rows/ (float) n_blocks );
+  
+  convolve_row<<< n_blocks, n_threads_per_block >>>
+    ( in, out, n_rows, n_cols, coefs.n_border, d, causal, anticausal );
+
+  cudaMemcpy( output, out, size, cudaMemcpyDeviceToHost );
+  
+  cudaFree( in );
+  cudaFree( out );
+  cudaFree( d );
+  cudaFree( causal );
+  cudaFree( anticausal );
 }
 
 
@@ -145,7 +157,7 @@ int main( int argc, char* argv[] )
   std::string outfile = infile.substr( 0, infile.length() - 4 ) + "_blurred_cuda.png";
 
   // initialize input parameters for function
-  Image input = Image(infile);
+  Image input = Image( infile );
   fastfilters::iir::Coefficients coefs( 5.0, 0 );
   float output_data[input.width()*input.height()];
   
@@ -154,15 +166,7 @@ int main( int argc, char* argv[] )
   int N = input.width() * input.height();
   size_t size = N * sizeof(float);
   cudaDeviceSynchronize();
-  float* d_in;
-  cudaMalloc( &d_in, size );
-  float* d_out;
-  cudaMalloc( &d_out, size );
-  cudaMemcpy( d_in, input.data(), size, cudaMemcpyHostToDevice);
-  convolve_iir_gpu( d_in, d_out, input.width(), input.height(), coefs);
-  cudaMemcpy( output_data, d_out, size, cudaMemcpyDeviceToHost);
-  cudaFree(d_in);
-  cudaFree(d_out);
+  convolve_iir_gpu( input.data(), output_data, input.width(), input.height(), coefs);
   cudaDeviceSynchronize();
   auto end = std::chrono::high_resolution_clock::now();
   printf("%d", (end-begin).count()); // time in nanoseconds
