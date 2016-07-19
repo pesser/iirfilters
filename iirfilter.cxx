@@ -7,6 +7,7 @@
 
 #include "fastfilters.hxx"
 #include "image.hxx"
+#include "timer.h"
 
 #include <iostream>
 #include <string>
@@ -15,6 +16,7 @@
   
 int main( int argc, char* argv[] )
 {
+  Timer<false> timer;
   // check commandline parameters
   if( argc != 2 )
     {
@@ -32,11 +34,11 @@ int main( int argc, char* argv[] )
   float output_data[input.width()*input.height()];
   
   // time function
-  auto begin = std::chrono::high_resolution_clock::now();
+  timer.tick();
   fastfilters::iir::convolve_iir_inner_single_noavx(input.data(), input.width(),
                                                     input.height(), output_data, coefs );
-  auto end = std::chrono::high_resolution_clock::now();
-  std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count() << std::endl;
+  auto end = timer.tock();
+  std::cout << end << std::endl;
 
   // write result back to output file
   Image output = Image( output_data, input.width(), input.height() );
