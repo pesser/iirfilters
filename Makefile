@@ -6,7 +6,7 @@ CXXFLAGS += -Wall -Wextra -std=c++11 -I.
 LDFLAGS += -lpng
 NVCCFLAGS += -ccbin=$(CCBIN) -std=c++11 -I.
 
-EXECS = iirfilter iirfilter-cuda
+EXECS = iirfilter test_coefficients test_seq_deriche test_seq_deriche_2d
 
 all: $(EXECS)
 
