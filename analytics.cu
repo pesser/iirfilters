@@ -7,6 +7,7 @@
 */
 
 #include "fastfilters.hxx"
+#include "convolvegpu.hxx"
 
 #include <chrono>
 #include <stdlib.h>
@@ -19,7 +20,7 @@ int main( int argc, char* argv[] )
   // check commandline parameters
   if( argc != 3 )
     {
-      std::cout << "Usage: ./program width height" << std::endl;
+      printf("Usage: ./program width height\n");
       exit(0);
     }
   
@@ -37,6 +38,9 @@ int main( int argc, char* argv[] )
     {
       input_data[i] = rand()/float(RAND_MAX);
     }
+
+  // get coefficients for convolution
+  fastfilters::iir::Coefficients coefs( 5.0, 0 );
   
   // time functions
   auto begin = std::chrono::high_resolution_clock::now();
@@ -48,8 +52,7 @@ int main( int argc, char* argv[] )
 
   begin = std::chrono::high_resolution_clock::now();
   cudaDeviceSynchronize();
-  convolve_iir_gpu( input_data2, output_data2, w, h, coefs);
-  fastfilters::iir::convolve_iir_inner_single_noavx(input_data, w, h, output_data, coefs );
+  fastfilters::iir::convolve_iir_inner_single_noavx(input_data, w, h, seq_output_data, coefs );
   cudaDeviceSynchronize();
   end = std::chrono::high_resolution_clock::now();
   printf("%d ", (end-begin).count());

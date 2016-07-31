@@ -97,24 +97,25 @@ __global__ void convolve_row( float* input, float* output, int M, int N, int n_b
 }
 
 
-void convolve_iir_gpu( float* input, float* output, int n_cols, int n_rows,
-                       fastfilters::iir::Coefficients &coefs)
+void convolve_iir_gpu( const float* input, float* output, const unsigned int n_cols, const unsigned int n_rows,
+                       const fastfilters::iir::Coefficients &coefs)
 {
   cudaSetDevice(0);
   float *in, *out, *d, *causal, *anticausal; 
-  unsigned int n_blocks, n_threads_per_block, coefs_size;  
+  unsigned int n_blocks, n_threads_per_block, coefs_size, data_size;  
   cudaDeviceProp prop;
 
-  data_size = n_cols * n_rows * sizeof(floats);
+  data_size = n_cols * n_rows * sizeof(float);
   coefs_size = 4 * sizeof(float);
   
-  cudaMalloc( &in, size );
-  cudaMalloc( &out, size );
+  cudaMalloc( &in, data_size );
+  cudaMalloc( &out, data_size );
   cudaMalloc( &d, coefs_size );
   cudaMalloc( &causal, coefs_size );
   cudaMalloc( &anticausal, coefs_size );
 
-  cudaMemcpy( in, input, size, cudaMemcpyHostToDevice );
+  cudaMemcpy( in, input, data_size, cudaMemcpyHostToDevice );
+
   cudaMemcpy( d, coefs.d.data(), coefs_size, cudaMemcpyHostToDevice );
   cudaMemcpy( causal, coefs.n_causal.data(), coefs_size, cudaMemcpyHostToDevice );
   cudaMemcpy( anticausal, coefs.n_anticausal.data(), coefs_size, cudaMemcpyHostToDevice );
@@ -126,7 +127,7 @@ void convolve_iir_gpu( float* input, float* output, int n_cols, int n_rows,
   convolve_row<<< n_blocks, n_threads_per_block >>>
     ( in, out, n_rows, n_cols, coefs.n_border, d, causal, anticausal );
 
-  cudaMemcpy( output, out, size, cudaMemcpyDeviceToHost );
+  cudaMemcpy( output, out, data_size, cudaMemcpyDeviceToHost );
   
   cudaFree( in );
   cudaFree( out );

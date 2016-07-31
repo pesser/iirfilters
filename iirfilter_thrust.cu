@@ -67,8 +67,8 @@ struct row_idx : public thrust::unary_function<int, int>
   }
 };
 
-void convolve_iir_gpu(const float* input, float* output, int n_cols, int n_rows,
-                      fastfilters::iir::Coefficients &coefs )
+void convolve_iir_gpu(const float* input, float* output, const unsigned int n_cols, const unsigned int n_rows,
+                      const fastfilters::iir::Coefficients &coefs )
 {
   cudaSetDevice(0);
   unsigned int n_pixels, n_border;

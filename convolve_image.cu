@@ -6,6 +6,7 @@
 */
 
 #include "fastfilters.hxx"
+#include "convolvegpu.hxx"
 #include "image.hxx"
 
 #include <string>
