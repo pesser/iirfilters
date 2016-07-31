@@ -2,3 +2,4 @@
 iirfilter
 iirfilter-cuda
 *.png
+*.o

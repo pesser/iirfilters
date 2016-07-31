@@ -1,15 +1,49 @@
 
 
+NVCCFLAGS=-std=c++11
 CFLAGS=-std=c++11
 
-iirfilter: iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx fastfilters.hxx image.hxx
-	g++ $(CFLAGS) iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx -lpng -o iirfilter
 
-iirfilter-cuda: iirfilter.cu svenpeter_kernel_iir_deriche.cxx fastfilters.hxx image.hxx
-	nvcc $(CFLAGS) iirfilter.cu svenpeter_kernel_iir_deriche.cxx -lpng -o iirfilter-cuda
+iirfilter: iirfilter.cxx iir_sequential.o coefs.o fastfilters.hxx image.hxx
+	g++ $(CFLAGS) -o $@ $^ -lpng
 
-iirfilter-thrust: iirfilter_thrust.cu svenpeter_kernel_iir_deriche.cxx fastfilters.hxx image.hxx
-	nvcc $(CFLAGS) iirfilter_thrust.cu svenpeter_kernel_iir_deriche.cxx -lpng -o iirfilter-thrust
+coefs.o: svenpeter_kernel_iir_deriche.cxx
+	g++ $(CFLAGS) -c -o $@ $^
+
+iir_sequential.o: svenpeter_convolve_iir_nosimd.cxx
+	g++ $(CFLAGS) -c -o $@ $^
+
+ifeq ("x","y")
+iirfilter-cuda: conv_image.o iir_cuda.o coefs.o fastfilters.hxx image.hxx
+	nvcc $(NVCCFLAGS) -o $@ $^ -lpng 
+
+iirfilter-thrust: conv_image.o iir_thrust.o coefs.o fastfilters.hxx image.hxx
+	nvcc $(NVCCFLAGS) -o $@ $^ -lpng
+
+analyze-iir-cuda: analytics.o iir_cuda.o coefs.o fastfilters.hxx image.hxx
+	nvcc $(NVCCFLAGS) -o $@ $^ -lpng 
+
+analyze-iir-thrust: analytics.o iir_thrust.o coefs.o fastfilters.hxx image.hxx
+	nvcc $(NVCCFLAGS) -o $@ $^ -lpng
+
+conv_image.o: convolve_image.cxx
+	nvcc -c $(NVCCFLAGS) -o $@ $^ 
+
+conv_image.o: analytics.cxx
+	nvcc -c $(NVCCFLAGS) -o $@ $^ 
+
+iir_cuda.o: iirfilter.cu
+	nvcc -c $(NVCCFLAGS) -o $@ $^ 
+
+iir_thrust.o: iirfilter_thrust.cu
+	nvcc -c $(NVCCFLAGS) -o $@ $^ 
+endif
+
 
 all:
-	iirfilter iirfilter-cuda iirfilter-thrust
+	iirfilter
+
+clean:
+	rm -f iirfilter *.o
+
+#iirfilter-cuda iirfilter-thrust
