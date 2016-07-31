@@ -21,99 +21,63 @@ void deriche_seq(
     const num* src,
     int N)
 {
-    assert(dest && buffer_l && buffer_r && src &&
-           buffer_l != src && buffer_r != src &&
-           N > 0);
-    
-    if(N <= 4)
-    {
-        throw std::runtime_error("Not implemented for short inputs (<= 4).");
-    }
+  assert(dest && buffer_l && buffer_r && src &&
+         buffer_l != src && buffer_r != src &&
+         N > 0);
 
-    /* Initialize boundary values of filter. We simply use zero here but
-     * some boundary extension might be desireable. */
-    for(int i = 0; i < DERICHE_MAX_K; ++i)
-    {
-      buffer_l[i] = 0;
-      buffer_r[i] = 0;
-    }
+  if(N <= 4)
+  {
+    throw std::runtime_error("Not implemented for short inputs (<= 4).");
+  }
+  if(c.K != 4)
+  {
+    throw std::runtime_error("Not implemented for order != 4.");
+  }
 
-    switch(c.K)
-    {
-      case 2:
-        for(int n = 2; n < N; ++n)
-          buffer_l[n] =
-              c.b_causal[0] * src[n]
-            + c.b_causal[1] * src[n - 1]
-            - c.a[1] * buffer_l[n - 1] 
-            - c.a[2] * buffer_l[n - 2];
-        break;
-      case 3:
-        for(int n = 3; n < N; ++n)
-          buffer_l[n] =
-              c.b_causal[0] * src[n]
-            + c.b_causal[1] * src[n - 1]
-            + c.b_causal[2] * src[n - 2]
-            - c.a[1] * buffer_l[n - 1] 
-            - c.a[2] * buffer_l[n - 2]
-            - c.a[3] * buffer_l[n - 3];
-        break;
-      case 4:
-        for(int n = 4; n < N; ++n)
-          buffer_l[n] =
-              c.b_causal[0] * src[n]
-            + c.b_causal[1] * src[n - 1]
-            + c.b_causal[2] * src[n - 2]
-            + c.b_causal[3] * src[n - 3]
-            - c.a[1] * buffer_l[n - 1] 
-            - c.a[2] * buffer_l[n - 2]
-            - c.a[3] * buffer_l[n - 3]
-            - c.a[4] * buffer_l[n - 4];
-        break;
-    }
+  // causal
+  for(int i = 0; i < 4; ++i)
+  {
+    buffer_l[i] = 0;
+    for(int j = 0; j <= i; ++j)
+      buffer_l[i] += c.b_causal[j] * src[i - j];
+    for(int j = 1; j <= i; ++j)
+      buffer_l[i] -= c.a[j] * buffer_l[i - j];
+  }
+  for(int n = 4; n < N; ++n)
+    buffer_l[n] =
+      c.b_causal[0] * src[n]
+      + c.b_causal[1] * src[n - 1]
+      + c.b_causal[2] * src[n - 2]
+      + c.b_causal[3] * src[n - 3]
+      - c.a[1] * buffer_l[n - 1] 
+      - c.a[2] * buffer_l[n - 2]
+      - c.a[3] * buffer_l[n - 3]
+      - c.a[4] * buffer_l[n - 4];
 
-    /* Why is src[i] and b_anticausal[0] not used? */
-    int n, i;
-    switch(c.K)
-    {
-      case 2:
-        n = 2;
-        i = (N - 1) - n;
-        for(; n < N; ++n, --i)
-          buffer_r[n] =
-              c.b_anticausal[1] * src[i + 1]
-            + c.b_anticausal[2] * src[i + 2]
-            - c.a[1] * buffer_r[n - 1] 
-            - c.a[2] * buffer_r[n - 2];
-        break;
-      case 3:
-        n = 3;
-        i = (N - 1) - n;
-        for(; n < N; ++n, --i)
-          buffer_r[n] =
-              c.b_anticausal[1] * src[i + 1]
-            + c.b_anticausal[2] * src[i + 2]
-            + c.b_anticausal[3] * src[i + 3]
-            - c.a[1] * buffer_r[n - 1] 
-            - c.a[2] * buffer_r[n - 2] 
-            - c.a[3] * buffer_r[n - 3];
-        break;
-      case 4:
-        n = 4;
-        i = (N - 1) - n;
-        for(; n < N; ++n, --i)
-          buffer_r[n] =
-              c.b_anticausal[1] * src[i + 1]
-            + c.b_anticausal[2] * src[i + 2]
-            + c.b_anticausal[3] * src[i + 3]
-            + c.b_anticausal[4] * src[i + 4]
-            - c.a[1] * buffer_r[n - 1] 
-            - c.a[2] * buffer_r[n - 2] 
-            - c.a[3] * buffer_r[n - 3]
-            - c.a[4] * buffer_r[n - 4];
-        break;
-    }
+  // anticausal
+  for(int i = 0; i < 4; ++i)
+  {
+    buffer_r[i] = 0;
+    for(int j = 1; j <= i; ++j)
+      buffer_r[i] += c.b_anticausal[j] * src[(N - 1) - i + j];
+    for(int j = 1; j <= i; ++j)
+      buffer_r[i] -= c.a[j] * buffer_r[i - j];
+  }
+  int n, i;
+  n = 4;
+  i = (N - 1) - n;
+  for(; n < N; ++n, --i)
+    buffer_r[n] =
+      c.b_anticausal[1] * src[i + 1]
+      + c.b_anticausal[2] * src[i + 2]
+      + c.b_anticausal[3] * src[i + 3]
+      + c.b_anticausal[4] * src[i + 4]
+      - c.a[1] * buffer_r[n - 1] 
+      - c.a[2] * buffer_r[n - 2] 
+      - c.a[3] * buffer_r[n - 3]
+      - c.a[4] * buffer_r[n - 4];
 
+  // combine
     for(int n = 0; n < N; ++n)
       dest[n] = buffer_l[n] + buffer_r[N - 1 - n];
 

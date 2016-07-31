@@ -25,7 +25,9 @@ void make_filter(num *result_b,
                  int K,
                  double sigma);
 
-/** \brief Coefficients for Deriche Gaussian approximation */
+/** \brief Coefficients for Deriche Gaussian approximation.
+ * Notice that b_anticausal and a start at 1 to resemble the indices of the
+ * source factor. */
 template <class num>
 struct deriche_coeffs
 {
