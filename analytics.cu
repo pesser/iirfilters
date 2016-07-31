@@ -25,12 +25,16 @@ int main( int argc, char* argv[] )
     }
   
   // initialize input parameters
-  unsigned int w = atoi(argv[1]);
-  unsigned int h = atoi(argv[1]);
-   
-  float input_data[w*h];
-  float output_data[w*h];
-  float seq_output_data[w*h];
+  int w = atoi(argv[1]);
+  int h = atoi(argv[2]);
+
+  float* input_data;
+  float* output_data;
+  float* seq_output_data;
+
+  input_data = (float*) malloc(w*h*sizeof(float));
+  output_data = (float*) malloc(w*h*sizeof(float));
+  seq_output_data = (float*) malloc(w*h*sizeof(float));
 
   // create random image
   srand( (unsigned) time(NULL) );
@@ -59,11 +63,14 @@ int main( int argc, char* argv[] )
 
   
   // calculate RMS error
-  float rmse = 0.0;
-  for( int i=0; i<w*h; ++i )
-    rmse += pow( seq_output_data[i] - output_data[i], 2);
+  long double rmse = 0.0;
+  for( int i=0; i<w*h; ++i ) 
+    {
+      rmse += pow( seq_output_data[i] - output_data[i], 2)/(w*h);
+    }
+  printf("%Lf ", rmse);
   rmse = sqrt(rmse);
-  printf("%f", rmse);
+  printf("%Lf", rmse);
   
   return 0;
 }

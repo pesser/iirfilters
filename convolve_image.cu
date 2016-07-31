@@ -26,7 +26,7 @@ int main( int argc, char* argv[] )
 
   // determine file names
   std::string infile = argv[1];
-  std::string outfile = infile.substr( 0, infile.length() - 4 ) + "_blurred_thrust.png";
+  std::string outfile = infile.substr( 0, infile.length() - 4 ) + "_blurred_gpu.png";
 
   // initialize input parameters for function
   Image input = Image( infile );

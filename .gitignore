@@ -1,5 +1,10 @@
 
 iirfilter
 iirfilter-cuda
+iirfilter-thrust
+analyze-iir-cuda
+analyze-iir-thrust
 *.png
 *.o
+*.stats
+
