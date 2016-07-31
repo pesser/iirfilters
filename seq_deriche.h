@@ -3,87 +3,7 @@
 #include <vector>
 #include <stdexcept>
 
-/**
- * \brief Deriche Gaussian convolution
- * \param c         coefficients precomputed by deriche_precomp()
- * \param dest      output convolved data
- * \param buffer_l    workspace array with space for at least N elements
- * \param buffer_r    workspace array with space for at least N elements
- * \param src       data to be convolved
- * \param N         number of samples
- */
-template <class num>
-void deriche_seq(
-    const deriche_coeffs<num>& c,
-    num* dest,
-    num* buffer_l,
-    num* buffer_r,
-    const num* src,
-    int N)
-{
-  assert(dest && buffer_l && buffer_r && src &&
-         buffer_l != src && buffer_r != src &&
-         N > 0);
-
-  if(N <= 4)
-  {
-    throw std::runtime_error("Not implemented for short inputs (<= 4).");
-  }
-  if(c.K != 4)
-  {
-    throw std::runtime_error("Not implemented for order != 4.");
-  }
-
-  // causal
-  for(int i = 0; i < 4; ++i)
-  {
-    buffer_l[i] = 0;
-    for(int j = 0; j <= i; ++j)
-      buffer_l[i] += c.b_causal[j] * src[i - j];
-    for(int j = 1; j <= i; ++j)
-      buffer_l[i] -= c.a[j] * buffer_l[i - j];
-  }
-  for(int n = 4; n < N; ++n)
-    buffer_l[n] =
-      c.b_causal[0] * src[n]
-      + c.b_causal[1] * src[n - 1]
-      + c.b_causal[2] * src[n - 2]
-      + c.b_causal[3] * src[n - 3]
-      - c.a[1] * buffer_l[n - 1] 
-      - c.a[2] * buffer_l[n - 2]
-      - c.a[3] * buffer_l[n - 3]
-      - c.a[4] * buffer_l[n - 4];
-
-  // anticausal
-  for(int i = 0; i < 4; ++i)
-  {
-    buffer_r[i] = 0;
-    for(int j = 1; j <= i; ++j)
-      buffer_r[i] += c.b_anticausal[j] * src[(N - 1) - i + j];
-    for(int j = 1; j <= i; ++j)
-      buffer_r[i] -= c.a[j] * buffer_r[i - j];
-  }
-  int n, i;
-  n = 4;
-  i = (N - 1) - n;
-  for(; n < N; ++n, --i)
-    buffer_r[n] =
-      c.b_anticausal[1] * src[i + 1]
-      + c.b_anticausal[2] * src[i + 2]
-      + c.b_anticausal[3] * src[i + 3]
-      + c.b_anticausal[4] * src[i + 4]
-      - c.a[1] * buffer_r[n - 1] 
-      - c.a[2] * buffer_r[n - 2] 
-      - c.a[3] * buffer_r[n - 3]
-      - c.a[4] * buffer_r[n - 4];
-
-  // combine
-    for(int n = 0; n < N; ++n)
-      dest[n] = buffer_l[n] + buffer_r[N - 1 - n];
-
-    return;
-}
-
+/*
 template <class num>
 void transpose(num* t, num* src, int width_src, int height_src)
 {
@@ -95,6 +15,7 @@ void transpose(num* t, num* src, int width_src, int height_src)
     }
   }
 }
+*/
 
 /**
  * \brief Deriche Gaussian 2D convolution
@@ -104,8 +25,10 @@ void transpose(num* t, num* src, int width_src, int height_src)
  * \param buffer_r      array with at least max(width,height) elements
  * \param buffer_m      array with at least width * height elements
  * \param src           data to be convolved
- * \param width         image width
  * \param height        image height
+ * \param width         image width
+ * \param row_stride        stride along dimension 0 (i.e. &src(i + 1, j) - &src(i, j) = row_stride)
+ * \param column_stride     stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
  */
 template <class num>
 void deriche_seq_2d(
@@ -113,35 +36,61 @@ void deriche_seq_2d(
     num *dest,
     num *buffer_l,
     num *buffer_r,
-    num *buffer_m,
     const num *src, 
-    int width, int height)
+    int height, int width,
+    int row_stride, int column_stride)
 {
-    int num_pixels = width * height;
-    
-    assert(dest && buffer_l && buffer_r && src && num_pixels > 0);
+    assert(dest && buffer_l && buffer_r && src && c.K == 4 && width > 4 && height > 4);
+    const int b_column_stride = 1;
     
     num* dest_y = dest;
     const num* src_y = src;
-    for(int y = 0; y < height; ++y, dest_y += width, src_y += width)
-      deriche_seq(c,
-                  dest_y,
-                  buffer_l,
-                  buffer_r,
-                  src_y,
-                  width);
+    for(int y = 0; y < height; ++y, dest_y += row_stride, src_y += row_stride)
+    {
+      // causal
+      for(int i = 0; i < 4; ++i)
+      {
+        buffer_l[i * b_column_stride] = 0;
+        for(int j = 0; j <= i; ++j)
+          buffer_l[i * b_column_stride] += c.b_causal[j] * src_y[(i - j) * column_stride];
+        for(int j = 1; j <= i; ++j)
+          buffer_l[i * b_column_stride] -= c.a[j] * buffer_l[(i - j) * b_column_stride];
+      }
+      for(int n = 4; n < width; ++n)
+        buffer_l[n * b_column_stride] =
+            c.b_causal[0] * src_y[(n - 0) * column_stride]
+          + c.b_causal[1] * src_y[(n - 1) * column_stride]
+          + c.b_causal[2] * src_y[(n - 2) * column_stride]
+          + c.b_causal[3] * src_y[(n - 3) * column_stride]
+          - c.a[1] * buffer_l[(n - 1) * b_column_stride] 
+          - c.a[2] * buffer_l[(n - 2) * b_column_stride]
+          - c.a[3] * buffer_l[(n - 3) * b_column_stride]
+          - c.a[4] * buffer_l[(n - 4) * b_column_stride];
+      // anticausal
+      for(int i = 0; i < 4; ++i)
+      {
+        buffer_r[i * b_column_stride] = 0;
+        for(int j = 1; j <= i; ++j)
+          buffer_r[i * b_column_stride] += c.b_anticausal[j] * src_y[((width - 1) - i + j) * column_stride];
+        for(int j = 1; j <= i; ++j)
+          buffer_r[i * b_column_stride] -= c.a[j] * buffer_r[(i - j) * b_column_stride];
+      }
+      int n, i;
+      n = 4;
+      i = (width - 1) - n;
+      for(; n < width; ++n, --i)
+        buffer_r[n * b_column_stride] =
+            c.b_anticausal[1] * src_y[(i + 1) * column_stride]
+          + c.b_anticausal[2] * src_y[(i + 2) * column_stride]
+          + c.b_anticausal[3] * src_y[(i + 3) * column_stride]
+          + c.b_anticausal[4] * src_y[(i + 4) * column_stride]
+          - c.a[1] * buffer_r[(n - 1) * b_column_stride] 
+          - c.a[2] * buffer_r[(n - 2) * b_column_stride] 
+          - c.a[3] * buffer_r[(n - 3) * b_column_stride]
+          - c.a[4] * buffer_r[(n - 4) * b_column_stride];
 
-    transpose(buffer_m, dest, width, height);
-
-    num* dest_x = buffer_m;
-    const num* src_x = buffer_m;
-    for(int x = 0; x < width; ++x, dest_x += height, src_x += height)
-      deriche_seq(c, 
-                  dest_x,
-                  buffer_l,
-                  buffer_r,
-                  src_x,
-                  height);
-
-    transpose(dest, buffer_m, height, width);
+      // combine
+      for(int n = 0; n < width; ++n)
+        dest_y[n * column_stride] = buffer_l[n * b_column_stride] + buffer_r[(width - 1 - n) * b_column_stride];
+    }
 }

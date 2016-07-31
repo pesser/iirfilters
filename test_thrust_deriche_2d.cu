@@ -52,10 +52,14 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
 
   deriche_seq_2d<T>(
       coeffs,
+      buffer_m.data(),
+      buffer_l.data(), buffer_r.data(),
+      input.data(), N, M, M, 1);
+  deriche_seq_2d<T>(
+      coeffs,
       output.data(),
       buffer_l.data(), buffer_r.data(),
-      buffer_m.data(),
-      input.data(), M, N);
+      buffer_m.data(), M, N, 1, M);
 }
 
 // compare sequential and thrust version on constant matrix

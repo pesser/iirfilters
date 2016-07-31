@@ -2,11 +2,12 @@ CXX ?= g++
 NVCC ?= nvcc
 CCBIN ?= $(CXX)
 
-CXXFLAGS += -Wall -Wextra -std=c++11 -I.
+CXXFLAGS += -Wall -Wextra -std=c++11 -I. -O3
 LDFLAGS += -lpng
-NVCCFLAGS += -ccbin=$(CCBIN) -std=c++11 -I. --expt-extended-lambda
+NVCCFLAGS += -ccbin=$(CCBIN) -std=c++11 -I. --expt-extended-lambda --compiler-options="-O3"
 
-EXECS = iirfilter test_coefficients test_seq_deriche example_seq_deriche test_thrust_deriche_2d example_thrust_deriche time_thrust_deriche
+EXECS = iirfilter test_coefficients test_thrust_deriche_2d example_thrust_deriche time_thrust_deriche time_seq_deriche
+#test_seq_deriche example_seq_deriche 
 
 all: $(EXECS)
 
