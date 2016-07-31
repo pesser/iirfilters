@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 {
   Timer<false> timer;
   float sigma = 5.0;
-  int order = 3;
+  int order = 4;
 
   if(argc != 3)
   {
@@ -29,6 +29,7 @@ int main(int argc, char** argv)
 
   std::vector<float> output(img_size);
 
+  timer.tick();
   std::vector<float> buffer_l(max_dim);
   std::vector<float> buffer_r(max_dim);
   std::vector<float> buffer_m(img_size);
@@ -36,13 +37,12 @@ int main(int argc, char** argv)
   deriche_coeffs<float> c;
   deriche_precomp<float>(&c, sigma, order);
 
-  timer.tick();
   deriche_seq_2d<float>(
       c, output.data(), buffer_l.data(), buffer_r.data(), buffer_m.data(),
       img.data(), img.width(), img.height());
   double time = timer.tock();
 
-  std::cout << time << std::endl;
+  std::cout << "Filtered in " << time << " ms" << std::endl;
 
   Image img_out(output.data(), img.width(), img.height());
   img_out.write(out_filename);

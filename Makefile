@@ -6,7 +6,7 @@ CXXFLAGS += -Wall -Wextra -std=c++11 -I.
 LDFLAGS += -lpng
 NVCCFLAGS += -ccbin=$(CCBIN) -std=c++11 -I. --expt-extended-lambda
 
-EXECS = iirfilter test_coefficients test_seq_deriche test_seq_deriche_2d test_thrust_deriche_2d
+EXECS = iirfilter test_coefficients test_seq_deriche example_seq_deriche test_thrust_deriche_2d example_thrust_deriche
 
 all: $(EXECS)
 
@@ -22,6 +22,9 @@ iirfilter-cuda: iirfilter.cu
 
 test_thrust_deriche_2d: test_thrust_deriche_2d.cu
 	$(NVCC) $(NVCCFLAGS) $^ -o $@
+
+example_thrust_deriche: example_thrust_deriche.cu
+	$(NVCC) $(NVCCFLAGS) $^ -lpng -o $@
 
 clean:
 	rm -f $(EXECS)
