@@ -2,3 +2,4 @@
 iirfilter
 iirfilter-cuda
 *.png
+presentation/build
