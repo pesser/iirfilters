@@ -35,7 +35,7 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
   std::cout << time_init << ",";
   std::cout << time_horizontal << ",";
   std::cout << time_vertical << ",";
-  std::cout << 0.0 << ",";
+  std::cout << 0.0;
   std::cout << std::endl;
 }
 
