@@ -28,7 +28,7 @@ example_thrust_deriche: example_thrust_deriche.cu
 	$(NVCC) $(NVCCFLAGS) $^ -lpng -o $@
 
 time_thrust_deriche: time_thrust_deriche.cu
-	$(NVCC) $(NVCCFLAGS) $^ -o $@
+	$(NVCC) $(NVCCFLAGS) $^ -lcublas -o $@
 
 clean:
 	rm -f $(EXECS)

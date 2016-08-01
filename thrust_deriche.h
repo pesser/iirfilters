@@ -9,6 +9,21 @@
 #include <thrust/iterator/transform_iterator.h>
 #include <thrust/system/cuda/execution_policy.h>
 
+#include <cublas_v2.h>
+
+#ifndef cublasSafeCall
+#define cublasSafeCall(err) __cublasSafeCall(err, __FILE__, __LINE__)
+#endif
+
+void __cublasSafeCall(cublasStatus_t err, const char *file, const int line)
+{
+	if(CUBLAS_STATUS_SUCCESS != err) {
+		fprintf(stderr, "CUBLAS error in file '%s', line %d\n \nerror %d \nterminating!\n",__FILE__, __LINE__,err); 
+		cudaDeviceReset();
+    assert(0); 
+	}
+}
+
 
 /**
  * \brief Deriche causal or anticausal pass
@@ -174,7 +189,8 @@ void deriche_thrust_2d(
     TmpIt buffer_r_begin,
     InIt src_begin,
     unsigned int height, unsigned int width,
-    unsigned int row_stride, unsigned int column_stride)
+    unsigned int row_stride, unsigned int column_stride,
+    cublasHandle_t* handle = nullptr)
 {
     assert(c.K == 4);
 
@@ -202,12 +218,19 @@ void deriche_thrust_2d(
                          dest[i * column_stride] = row_l[i * column_stride] + row_r[(width - 1 - i) * column_stride];
                        }
                        });
-#else
+#elif defined _EXPLICIT_TRANSPOSE
     thrust::transform(
         buffer_l_begin, buffer_l_begin + width * height,
         buffer_r_begin,
         dest_begin,
         thrust::plus<T>());
+#else
+    T* buffer_l_ptr  = thrust::raw_pointer_cast(&*buffer_l_begin);
+    T* buffer_r_ptr  = thrust::raw_pointer_cast(&*buffer_r_begin);
+    T* dest_ptr = thrust::raw_pointer_cast(&*dest_begin);
+    T alpha = 1.;
+    T beta  = 1.;
+    cublasSafeCall(cublasSgeam(*handle, CUBLAS_OP_T, CUBLAS_OP_T, height, width, &alpha, buffer_l_ptr, width, &beta, buffer_r_ptr, width, dest_ptr, height));
 #endif
     cudaStreamDestroy(s1);
     cudaStreamDestroy(s2);

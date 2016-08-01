@@ -38,6 +38,9 @@ template <class T>
 void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
                     const deriche_coeffs<T>& coeffs, int N)
 {
+  cublasHandle_t handle;
+  cublasSafeCall(cublasCreate(&handle));
+
   Timer<true> timer;
 
   timer.tick();
@@ -46,7 +49,8 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
 
   thrust::device_vector<T> buffer_l(input.size());
   thrust::device_vector<T> buffer_r(input.size());
-  thrust::device_vector<T> buffer_m(input.size());
+  thrust::device_vector<T> buffer_m(input.size()); // not needed if we
+                                                   // transpose during addition of buffers
   double time_htd = timer.tock();
 
 #ifdef _NOTRANSPOSE
@@ -67,7 +71,7 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
       buffer_l.begin(), buffer_r.begin(),
       buffer_m.begin(), N, N, 1, N);
   double time_vertical = timer.tock();
-#else
+#elif defined _EXPLICIT_TRANSPOSE
   timer.tick();
   deriche_thrust_2d<T>(
       coeffs,
@@ -87,6 +91,26 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
       d_output.begin(), N, N, 1, N);
   transpose(N, N, buffer_m, d_output);
   double time_vertical = timer.tock();
+#else
+  timer.tick();
+  deriche_thrust_2d<T>(
+      coeffs,
+      buffer_m.begin(),
+      buffer_l.begin(), buffer_r.begin(),
+      d_input.begin(), N, N, 1, N,
+      &handle);
+  double time_horizontal = timer.tock();
+
+  cudaDeviceSynchronize();
+
+  timer.tick();
+  deriche_thrust_2d<T>(
+      coeffs,
+      d_output.begin(),
+      buffer_l.begin(), buffer_r.begin(),
+      buffer_m.begin(), N, N, 1, N,
+      &handle);
+  double time_vertical = timer.tock();
 #endif
 
   timer.tick();
@@ -102,6 +126,8 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
   std::cout << time_vertical << ",";
   std::cout << time_dth;
   std::cout << std::endl;
+
+  cublasSafeCall(cublasDestroy(handle));
 }
 
 // produce csv timings for N, PreInit, Horizontal, Vertical, Postinit
