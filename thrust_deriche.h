@@ -74,6 +74,7 @@ void deriche_thrust_pass(
       break;
     case true:
       // anticausal pass
+#ifdef _BACKWARD
       thrust::for_each_n(thrust::cuda::par.on(stream),
                          thrust::counting_iterator<int>(0), height,
                          [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
@@ -109,6 +110,44 @@ void deriche_thrust_pass(
                              ;
                          }
                          });
+#else
+      thrust::for_each_n(thrust::cuda::par.on(stream),
+                         thrust::counting_iterator<int>(0), height,
+                         [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
+                         auto row = buffer_begin + n * row_stride;
+                         auto src = src_begin + n * row_stride;
+
+                         // init recursion
+                         for(int i = 0; i < 4; ++i)
+                         {
+                         row[(width - 1 - i) * column_stride] = 0;
+                         for(int j = 1; j <= i; ++j)
+                         {
+                         row[(width - 1 - i) * column_stride] = row[(width - 1 - i) * column_stride]
+                                                              + c.b_anticausal[j] * src[((width - 1) - i + j) * column_stride];
+                         }
+                         for(int j = 1; j <= i; ++j)
+                         {
+                         row[(width - 1 - i) * column_stride] = row[(width - 1 - i) * column_stride] - c.a[j] * row[(width - 1 - (i - j)) * column_stride];
+                         }
+                         }
+
+                         // recurse
+                         for(int i = 4; i < width; ++i)
+                         {
+                           row[(width - 1 - i) * column_stride] = 
+                               c.b_anticausal[1] * src[((width - 1) - i + 1) * column_stride]
+                             + c.b_anticausal[2] * src[((width - 1) - i + 2) * column_stride]
+                             + c.b_anticausal[3] * src[((width - 1) - i + 3) * column_stride]
+                             + c.b_anticausal[4] * src[((width - 1) - i + 4) * column_stride]
+                             - c.a[1] * row[(width - 1 - (i - 1)) * column_stride]
+                             - c.a[2] * row[(width - 1 - (i - 2)) * column_stride]
+                             - c.a[3] * row[(width - 1 - (i - 3)) * column_stride]
+                             - c.a[4] * row[(width - 1 - (i - 4)) * column_stride]
+                             ;
+                         }
+                         });
+#endif
       break;
   }
 }
@@ -150,15 +189,9 @@ void deriche_thrust_2d(
     deriche_thrust_pass<T, TmpIt, InIt, true>(
         s2, c, buffer_r_begin, src_begin, height, width, row_stride, column_stride);
 
-    /*
-    thrust::transform(
-        buffer_l_begin, buffer_l_begin + width * height,
-        thrust::make_reverse_iterator(buffer_r_begin + width * height),
-        dest_begin,
-        thrust::plus<T>());
-        */
     cudaStreamSynchronize(s1);
     cudaStreamSynchronize(s2);
+#ifdef _BACKWARD
     thrust::for_each_n(thrust::counting_iterator<int>(0), height,
                        [dest_begin, buffer_l_begin, buffer_r_begin, row_stride, column_stride, width] __device__ (int n) {
                        auto dest = dest_begin + n * row_stride;
@@ -169,6 +202,13 @@ void deriche_thrust_2d(
                          dest[i * column_stride] = row_l[i * column_stride] + row_r[(width - 1 - i) * column_stride];
                        }
                        });
+#else
+    thrust::transform(
+        buffer_l_begin, buffer_l_begin + width * height,
+        buffer_r_begin,
+        dest_begin,
+        thrust::plus<T>());
+#endif
     cudaStreamDestroy(s1);
     cudaStreamDestroy(s2);
 
