@@ -5,6 +5,35 @@
 
 #include <thrust/device_vector.h>
 
+struct transpose_index : public thrust::unary_function<int, int>
+{
+  int m, n;
+
+  __host__ __device__
+    transpose_index(int m, int n) : m(m), n(n) {}
+
+  __host__ __device__
+    int operator()(int linear_index)
+    {
+      int i = linear_index / n;
+      int j = linear_index % n;
+
+      return m * j + i;
+    }
+};
+
+template <class T>
+void transpose(int m, int n, thrust::device_vector<T>& src, thrust::device_vector<T>& dst)
+{
+	thrust::counting_iterator<int> indices(0);
+
+	thrust::gather
+		(thrust::make_transform_iterator(indices, transpose_index(n, m)),
+		 thrust::make_transform_iterator(indices, transpose_index(n, m)) + dst.size(),
+		 src.begin(),
+		 dst.begin());
+}
+
 template <class T>
 void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
                     const deriche_coeffs<T>& coeffs, int N)
@@ -20,6 +49,7 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
   thrust::device_vector<T> buffer_m(input.size());
   double time_htd = timer.tock();
 
+#ifdef _NOTRANSPOSE
   timer.tick();
   deriche_thrust_2d<T>(
       coeffs,
@@ -37,6 +67,27 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
       buffer_l.begin(), buffer_r.begin(),
       buffer_m.begin(), N, N, 1, N);
   double time_vertical = timer.tock();
+#else
+  timer.tick();
+  deriche_thrust_2d<T>(
+      coeffs,
+      buffer_m.begin(),
+      buffer_l.begin(), buffer_r.begin(),
+      d_input.begin(), N, N, 1, N);
+  transpose(N, N, buffer_m, d_output);
+  double time_horizontal = timer.tock();
+
+  cudaDeviceSynchronize();
+
+  timer.tick();
+  deriche_thrust_2d<T>(
+      coeffs,
+      buffer_m.begin(),
+      buffer_l.begin(), buffer_r.begin(),
+      d_output.begin(), N, N, 1, N);
+  transpose(N, N, buffer_m, d_output);
+  double time_vertical = timer.tock();
+#endif
 
   timer.tick();
   output.resize(d_output.size()); // output should have the right capacity
