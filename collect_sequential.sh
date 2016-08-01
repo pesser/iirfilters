@@ -7,7 +7,7 @@ exe=time_seq_deriche
 log="data_${exe}_${githash}"
 
 # header
-echo "PreInit,Horizontal,Vertical,PostInit" > ${log}
+echo "N,PreInit,Horizontal,Vertical,PostInit" > ${log}
 
 # build
 make $exe

@@ -31,6 +31,7 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
       buffer_m.data(), N, N, 1, N);
   double time_vertical = timer.tock();
 
+  std::cout << N << ",";
   std::cout << time_init << ",";
   std::cout << time_horizontal << ",";
   std::cout << time_vertical << ",";
@@ -38,7 +39,7 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
   std::cout << std::endl;
 }
 
-// produce csv timings for PreInit, Horizontal, Vertical, Postinit
+// produce csv timings for N, PreInit, Horizontal, Vertical, Postinit
 int main(int argc, char** argv)
 {
   typedef float prec_t;
