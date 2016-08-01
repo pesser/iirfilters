@@ -45,17 +45,19 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
   thrust::copy(d_output.begin(), d_output.end(), output.begin());
   double time_dth = timer.tock();
 
-  std::cout << "HostDevice: " << time_htd << std::endl;
-  std::cout << "Horizontal: " << time_horizontal << std::endl;
-  std::cout << "Vertical: " << time_vertical << std::endl;
-  std::cout << "DeviceHost: " << time_dth << std::endl;
+  std::cout << N << ",";
+  std::cout << time_htd << ",";
+  std::cout << time_horizontal << ",";
+  std::cout << time_vertical << ",";
+  std::cout << time_dth;
+  std::cout << std::endl;
 }
 
+// produce csv timings for N, PreInit, Horizontal, Vertical, Postinit
 int main(int argc, char** argv)
 {
   typedef float prec_t;
 
-  Timer<true> timer;
   float sigma = 5.0;
   int order = 4;
 
@@ -72,11 +74,7 @@ int main(int argc, char** argv)
   deriche_coeffs<prec_t> c;
   deriche_precomp<prec_t>(&c, sigma, order);
 
-  timer.tick();
   compute_thrust(output, input_data, c, N);
-  double time = timer.tock();
-
-  std::cout << "Total " << time << std::endl;
 
   return 0;
 }
