@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-samples=$((4 * 1024))
+samples=$((4 * 128))
 
 githash=$(git log --pretty=format:'%h' -n 1)
 exe=time_thrust_deriche
@@ -11,8 +11,8 @@ echo "N,PreInit,Horizontal,Vertical,PostInit" > ${log}
 
 # build
 make $exe
-# collect
-for((N=16;N<=16384;N*=2))
+# collect from 2**7 to 2**14
+for((N=128;N<=16384;N*=2))
 do
   for((sample=0;sample<samples;++sample))
   do
