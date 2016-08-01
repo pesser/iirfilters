@@ -7,6 +7,7 @@
 #include <thrust/iterator/reverse_iterator.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/transform_iterator.h>
+#include <thrust/system/cuda/execution_policy.h>
 
 
 /**
@@ -35,8 +36,13 @@ void deriche_thrust_2d(
 {
     assert(c.K == 4);
 
+    cudaStream_t s1, s2;
+    cudaStreamCreate(&s1);
+    cudaStreamCreate(&s2);
+
     // causal pass
-    thrust::for_each_n(thrust::counting_iterator<int>(0), height,
+    thrust::for_each_n(thrust::cuda::par.on(s1),
+                       thrust::counting_iterator<int>(0), height,
                        [buffer_l_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
                        auto row = buffer_l_begin + n * row_stride;
                        auto src = src_begin + n * row_stride;
@@ -72,7 +78,8 @@ void deriche_thrust_2d(
                        });
 
     // anticausal pass
-    thrust::for_each_n(thrust::counting_iterator<int>(0), height,
+    thrust::for_each_n(thrust::cuda::par.on(s2),
+                       thrust::counting_iterator<int>(0), height,
                        [buffer_r_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
                        auto row = buffer_r_begin + n * row_stride;
                        auto src = src_begin + n * row_stride;
@@ -114,7 +121,8 @@ void deriche_thrust_2d(
         dest_begin,
         thrust::plus<T>());
         */
-    cudaDeviceSynchronize();
+    cudaStreamSynchronize(s1);
+    cudaStreamSynchronize(s2);
     thrust::for_each_n(thrust::counting_iterator<int>(0), height,
                        [dest_begin, buffer_l_begin, buffer_r_begin, row_stride, column_stride, width] __device__ (int n) {
                        auto dest = dest_begin + n * row_stride;
@@ -125,6 +133,8 @@ void deriche_thrust_2d(
                          dest[i * column_stride] = row_l[i * column_stride] + row_r[(width - 1 - i) * column_stride];
                        }
                        });
+    cudaStreamDestroy(s1);
+    cudaStreamDestroy(s2);
 
     return;
 }
