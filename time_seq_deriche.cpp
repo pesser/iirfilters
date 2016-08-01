@@ -31,16 +31,18 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
       buffer_m.data(), N, N, 1, N);
   double time_vertical = timer.tock();
 
-  std::cout << "Init: " << time_init << std::endl;
-  std::cout << "Horizontal: " << time_horizontal << std::endl;
-  std::cout << "Vertical: " << time_vertical << std::endl;
+  std::cout << time_init << ",";
+  std::cout << time_horizontal << ",";
+  std::cout << time_vertical << ",";
+  std::cout << 0.0 << ",";
+  std::cout << std::endl;
 }
 
+// produce csv timings for PreInit, Horizontal, Vertical, Postinit
 int main(int argc, char** argv)
 {
   typedef float prec_t;
 
-  Timer<false> timer;
   float sigma = 5.0;
   int order = 4;
 
@@ -57,11 +59,7 @@ int main(int argc, char** argv)
   deriche_coeffs<prec_t> c;
   deriche_precomp<prec_t>(&c, sigma, order);
 
-  timer.tick();
   compute_seq(output, input_data, c, N);
-  double time = timer.tock();
-
-  std::cout << "Total: " << time << std::endl;
 
   return 0;
 }
