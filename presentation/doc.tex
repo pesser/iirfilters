@@ -95,12 +95,28 @@ Less parallelism than FIR - each row's column depends on previous column's
 result.
 }
 
-\begin{frame}[fragile]{The algorithm}
-  \begin{lstlisting}
-  int i = 42;
-  \end{lstlisting}
-\end{frame}
+\begin{frame}
+\frametitle{Original Algorithm}
+\label{sec-3-1-1}
 
+\begin{itemize}
+\item everything is sequential
+\item Deriche coefficients
+\end{itemize}
+    \lstinputlisting[firstline=67, lastline=84, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
+\begin{itemize}
+\item anticausal pass equivalent to causal
+\end{itemize}
+\end{frame}
+\begin{frame}
+\frametitle{Original Algorithm - Border treatment}
+\label{sec-3-1-2}
+
+\begin{itemize}
+\item mirroring
+\end{itemize}
+   \lstinputlisting[firstline=47, lastline=65, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
+\end{frame}
 
 \section{Parallelization}
 \frame{\frametitle{Possibilities and challenges}
@@ -137,7 +153,54 @@ Our data: Image sequences of approximately 1024x1024 pixels.
 \end{itemize}
 }
 
-\begin{frame}{For each parallelization}
+\begin{frame}
+\frametitle{Parallel Implementation - Cuda}
+
+\begin{itemize}
+\item Reference implementation
+\item uses old code for row in kernel \\
+$\to$ border treatment: mirroring
+\end{itemize}
+
+   \lstinputlisting[firstline=47, lastline=48, basicstyle=\tiny]{code/iirfilter.cu}
+
+   \lstinputlisting[firstline=10, lastline=17, basicstyle=\tiny]{code/iirfilter.cu}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Parallel Implementation - Prefix sums}
+Segmented prefix sum on iterator tuple:
+\lstinputlisting[firstline=93, lastline=107, basicstyle=\tiny]{code/iirfilter_thrust.cu}
+
+   
+\end{frame}
+
+\begin{frame}
+\frametitle{Parallel Implementation - Prefix sums (2)}
+\lstinputlisting[firstline=24, lastline=43, basicstyle=\tiny]{code/iirfilter_thrust.cu}
+\begin{enumerate}
+\item[$\to$] Problem: fixed window size
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Parallel Implementation - For-each}
+
+Code Vorstellung
+\end{frame}
+
+\begin{frame}
+\frametitle{Comparison}
+\begin{figure}
+\centering
+    \includegraphics[scale=0.4]{imgs/performance.png}
+    
+    \end{figure}
+\end{frame}
+
+\begin{frame}{For each Implementation - Analysis}
   \begin{figure}
     \includegraphics[scale=0.4]{imgs/thrust_vs_sequential_total.pdf} 
   \end{figure}
