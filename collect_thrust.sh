@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-samples=1024
+samples=$((4 * 1024))
 
 githash=$(git log --pretty=format:'%h' -n 1)
 exe=time_thrust_deriche
