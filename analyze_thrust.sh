@@ -9,7 +9,7 @@ fi
 
 touch $tsvfile
 
-for n in 25 50 100 200 400 800 1600 3200 
+for n in `seq 0 100 2000`
 do    
     total0=0
     total1=0
