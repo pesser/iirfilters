@@ -328,39 +328,6 @@ cublasSgeam(
   \end{columns}
 \end{frame} 
 
-\begin{frame}
-\frametitle{Parallel Implementation - Prefix sums}
-Segmented prefix sum on iterator tuple:
-\lstinputlisting[firstline=93, lastline=107, basicstyle=\tiny]{code/iirfilter_thrust.cu}
-
-   
-\end{frame}
-
-\begin{frame}
-\frametitle{Parallel Implementation - Prefix sums (2)}
-\lstinputlisting[firstline=24, lastline=43, basicstyle=\tiny]{code/iirfilter_thrust.cu}
-\begin{enumerate}
-\item[$\to$] Problem: fixed window size
-\end{enumerate}
-
-\end{frame}
-
-\begin{frame}
-\frametitle{Parallel Implementation - For-each}
-
-Code Vorstellung
-\end{frame}
-
-\begin{frame}
-\frametitle{Comparison}
-\begin{figure}
-\centering
-    \includegraphics[scale=0.4]{imgs/performance.png}
-    
-    \end{figure}
-\end{frame}
-
-
 \section{Conclusion} 
 \frame{\frametitle{Further considerations}
 Different data and applications need different optimizations.
