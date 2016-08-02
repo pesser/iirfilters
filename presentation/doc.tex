@@ -36,84 +36,140 @@
 \frame{\frametitle{Overview}\tableofcontents} 
 
 \section{Motivation} 
-\frame{\frametitle{ilastik} 
-ilastik is a toolkit for interactive image classification and segmentation.
-Sven Peter is working on object tracking.
-Besides the image itself, algorithms rely on precomputed features of the
-image.
-}
-\frame{\frametitle{Image Features} 
+\frame{\frametitle{Ilastik}
+\begin{figure}
+\begin{tabular}{c}
+\includegraphics[scale=0.1]{imgs/cubes_combined.jpg}
+\end{tabular}
+\end{figure}
 \begin{itemize}
-  \item Scale-space representation
-  \item Edges
-  \item Corners
+  \item Ilastik: toolkit for interactive image classification and segmentation
+  \item Algorithms rely on precomputed features of the image
 \end{itemize}
+\begin{figure}
+\centering
+\begin{tabular}{ccc}
+\includegraphics[scale=0.05]{imgs/ilastik1.png}\quad &
+\includegraphics[scale=0.05]{imgs/ilastik2.png}\quad &
+\includegraphics[scale=0.07]{imgs/ilastik3.png} 
+\end{tabular}
+\end{figure}
 }
 
-\frame{\frametitle{Gaussian Filtering} 
+\frame{\frametitle{Tracking}
+Example:
 \begin{itemize}
+  \item Project supervisor Sven Peter is working on object tracking \\
+        $\to$ Requires classification scale space and edge detection
+\end{itemize}
+\begin{figure}
+\centering
+\begin{tabular}{cc}
+\includegraphics[scale=0.08]{imgs/tracking1.png}\quad &
+\includegraphics[scale=0.08]{imgs/tracking2.png} 
+\end{tabular}
+\end{figure}
+}
+
+%\frame{\frametitle{Image Features} 
+%\begin{itemize}
+  %\item Edges
+  %\item Corners
+  %\item Scale-space representation
+%\end{itemize}
+%}
+
+\frame{\frametitle{Gaussian Filtering}
+Convolution: 
+$$(f*g)(x) := \int_{\mathbb{R}^n} f(\tau)g(x-\tau)\mathrm{d}\tau$$
+\begin{itemize}
+  \item discrete: $(f*g)[n]=\sum_{m=-\infty}^\infty f[n-m]\, g[m]$
+  \item $f\ldots$ image
+  \item $g\ldots$ signal, e.g. Gaussian
+\end{itemize}
+
+Gaussian:
+\begin{itemize}
+  \item $g=\frac{1}{\sqrt{2\sigma^2\pi}}e^{-{\frac {(x-\mu)^{2}}{2\sigma^{2}}}}$
   \item Convolution with Gaussian gives scale space representations
   \item Convolution with Gaussian derivative gives derivative of smoothed
     image (edge features)
 \end{itemize}
-Problem: Gaussian discretized to stencil. Coarse scale representation
-corresponds to wide Gaussians - those need larger stencils, too!
 }
 
 \frame{\frametitle{Implementations of Filters}
 \begin{itemize}
-  \item Direct convolution
-  \item FFT
-  \item IIR
+  \item Finite Impulse Response Filters (FIR):
+  \begin{itemize}
+  \item if $g$ finite:
+  $$(f*g)[n]=\sum_{m=-\infty}^\infty f[n-m]\, g[m] = \sum_{m=-M}^M f[n-m]g[m]$$
+  \item multiple muliply-adds for one pixel
+   \end{itemize}
+  \item Fast Fourier Transform (FFT)
+  \begin{itemize}
+  \item $\mathcal{F}(f)(t) = \frac{1}{\left(2\pi\right)^{\frac{n}{2}}}
+      \int_{\mathbb{R}^n} f(x)\,e^{-\mathrm{i} t \cdot x} \,\mathrm{d} x$
+  \item $\mathcal{F}(f*g) = (2 \pi)^{\tfrac{n}{2}} \, \mathcal{F}(f)\cdot \mathcal{F}(g)$
+  \item after transformation: 2 multiplications per pixel
+  \end{itemize}
 \end{itemize}
-Notice that both direct convolution as well as FFT suffer from increasing
-stencils and FFT does not always outperform direct convolution on GPUs.
-\cite{1648322}
+}
+
+\frame{\frametitle{Implementations of Filters}
+Problems:
+\begin{itemize}
+  \item suffer from increasing stencils
+  \begin{itemize}
+  \item e.g. wide Gaussian (needed for coarse-scale representation) 
+  \end{itemize}
+  \item FFT does not always outperform FIR on GPUs \cite{1648322}
+\end{itemize}
+Alternative: Infinite Impulse Response Filters (IIR)
 }
 
 
 \section{IIR} 
 \frame{\frametitle{The idea}
-Instead of using the real, possibly wide stencil, approximate it by a fixed
-size stencil. To compensate for reduced width of the stencil, use a
-recursive filter.
+
+Instead of using possibly wide stencil \\
+    $\to$ Approximate by a fixed size stencil and recursion \\
+    $\to$ Recursion makes filter infinite: \\
+   \qquad all previous values taken into account
 }
 
-\frame{\frametitle{The name}
-Why infinite impulse response?
-}
 
 \frame{\frametitle{The consequences}
-Approximation error - not too important here, we just use some
-filters that we \emph{think} will produce useful features for subsequent
-image analysis algorithms, so as long as it produces a visually
-plausible result it should be acceptable.
 
-Fixed computational cost - does not depend on scale parameter.
+\begin{itemize}
+\item Approximation error: not too important here \\
+    $\to$ result should be visually plausible.
 
-Less parallelism than FIR - each row's column depends on previous column's
-result.
+\item Fixed computational cost: does not depend on scale parameter
+
+\item Less parallelism than FIR: each row's column depends on previous column's
+result
+\end{itemize}
 }
 
 \begin{frame}
 \frametitle{Original Algorithm}
-\label{sec-3-1-1}
 
 \begin{itemize}
-\item everything is sequential
-\item Deriche coefficients
+\item Deriche coefficients \cite{deriche} $\to$ 2 passes: causal and anticausal
 \end{itemize}
     \lstinputlisting[firstline=67, lastline=84, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
 \begin{itemize}
-\item anticausal pass equivalent to causal
+\item $y_i = [x_i,\;x_{i-1},\;x_{i-2},\;x_{i-3}]\cdot\mathbf{c}
+- [y_{i-1},\;y_{i-2},\;y_{i-3},\;y_{i-4}]\cdot\mathbf{d}$ 
+\item anticausal pass and equivalent to causal 
 \end{itemize}
 \end{frame}
+
 \begin{frame}
 \frametitle{Original Algorithm - Border treatment}
-\label{sec-3-1-2}
 
 \begin{itemize}
-\item mirroring
+\item mirroring: $[\ldots,\;x_{2},\;x_{1},\;x_0,\;x_{1},\;x_{2},\;x_{3},\;x_{4},\;x_{5},\;x_{6},\;x_{7},\;x_{8},\ldots]$
 \end{itemize}
    \lstinputlisting[firstline=47, lastline=65, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
 \end{frame}
