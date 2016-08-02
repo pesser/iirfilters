@@ -24,6 +24,24 @@ void __cublasSafeCall(cublasStatus_t err, const char *file, const int line)
 	}
 }
 
+struct transpose_index : public thrust::unary_function<int, int>
+{
+  int m, n;
+
+  __host__ __device__
+    transpose_index(int m, int n) : m(m), n(n) {}
+
+  __host__ __device__
+    int operator()(int linear_index)
+    {
+      int i = linear_index / n;
+      int j = linear_index % n;
+
+      return m * j + i;
+    }
+};
+
+
 
 /**
  * \brief Deriche causal or anticausal pass
@@ -225,12 +243,22 @@ void deriche_thrust_2d(
         dest_begin,
         thrust::plus<T>());
 #else
+#ifdef _CUBLAS_TRANSPOSE
     T* buffer_l_ptr  = thrust::raw_pointer_cast(&*buffer_l_begin);
     T* buffer_r_ptr  = thrust::raw_pointer_cast(&*buffer_r_begin);
     T* dest_ptr = thrust::raw_pointer_cast(&*dest_begin);
     T alpha = 1.;
     T beta  = 1.;
     cublasSafeCall(cublasSgeam(*handle, CUBLAS_OP_T, CUBLAS_OP_T, height, width, &alpha, buffer_l_ptr, width, &beta, buffer_r_ptr, width, dest_ptr, height));
+#else
+    auto transposed_dest_begin =
+      thrust::make_permutation_iterator(dest_begin, thrust::make_transform_iterator(thrust::make_counting_iterator(0), transpose_index(height, width)));
+    thrust::transform(
+        buffer_l_begin, buffer_l_begin + width * height,
+        buffer_r_begin,
+        transposed_dest_begin,
+        thrust::plus<T>());
+#endif
 #endif
     cudaStreamDestroy(s1);
     cudaStreamDestroy(s2);

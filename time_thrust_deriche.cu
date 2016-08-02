@@ -5,23 +5,6 @@
 
 #include <thrust/device_vector.h>
 
-struct transpose_index : public thrust::unary_function<int, int>
-{
-  int m, n;
-
-  __host__ __device__
-    transpose_index(int m, int n) : m(m), n(n) {}
-
-  __host__ __device__
-    int operator()(int linear_index)
-    {
-      int i = linear_index / n;
-      int j = linear_index % n;
-
-      return m * j + i;
-    }
-};
-
 template <class T>
 void transpose(int m, int n, thrust::device_vector<T>& src, thrust::device_vector<T>& dst)
 {
@@ -38,8 +21,10 @@ template <class T>
 void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
                     const deriche_coeffs<T>& coeffs, int N)
 {
+#ifdef _CUBLAS_TRANSPOSE
   cublasHandle_t handle;
   cublasSafeCall(cublasCreate(&handle));
+#endif
 
   Timer<true> timer;
 
@@ -97,8 +82,11 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
       coeffs,
       buffer_m.begin(),
       buffer_l.begin(), buffer_r.begin(),
-      d_input.begin(), N, N, 1, N,
-      &handle);
+      d_input.begin(), N, N, 1, N
+#ifdef _CUBLAS_TRANSPOSE
+      , &handle
+#endif
+      );
   double time_horizontal = timer.tock();
 
   cudaDeviceSynchronize();
@@ -108,8 +96,11 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
       coeffs,
       d_output.begin(),
       buffer_l.begin(), buffer_r.begin(),
-      buffer_m.begin(), N, N, 1, N,
-      &handle);
+      buffer_m.begin(), N, N, 1, N
+#ifdef _CUBLAS_TRANSPOSE
+      , &handle
+#endif
+      );
   double time_vertical = timer.tock();
 #endif
 
@@ -127,7 +118,9 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
   std::cout << time_dth;
   std::cout << std::endl;
 
+#ifdef _CUBLAS_TRANSPOSE
   cublasSafeCall(cublasDestroy(handle));
+#endif
 }
 
 // produce csv timings for N, PreInit, Horizontal, Vertical, Postinit
