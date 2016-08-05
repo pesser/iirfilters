@@ -37,7 +37,7 @@ analytics.o: analytics.cu
 iir_cuda.o: iirfilter.cu
 	nvcc -c $(NVCCFLAGS) -o $@ $^ 
 
-iir_thrust.o: iirfilter_thrust.cu
+iir_thrust.o: iirfilter_thrust_prefix.cu
 	nvcc -c $(NVCCFLAGS) -o $@ $^ 
 
 

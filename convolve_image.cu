@@ -34,8 +34,8 @@ int main( int argc, char* argv[] )
   float output_data[input.width()*input.height()];
 
   // time function
-  auto begin = std::chrono::high_resolution_clock::now();
   cudaDeviceSynchronize();
+  auto begin = std::chrono::high_resolution_clock::now();
   convolve_iir_gpu( input.data(), output_data, input.width(), input.height(), coefs);
   cudaDeviceSynchronize();
   auto end = std::chrono::high_resolution_clock::now();
