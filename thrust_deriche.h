@@ -69,7 +69,11 @@ void deriche_thrust_pass(
   {
     case false:
       // causal pass
+#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_OMP
+      thrust::for_each_n(
+#else
       thrust::for_each_n(thrust::cuda::par.on(stream),
+#endif
                          thrust::counting_iterator<int>(0), height,
                          [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
                          auto row = buffer_begin + n * row_stride;
@@ -108,7 +112,11 @@ void deriche_thrust_pass(
     case true:
       // anticausal pass
 #ifdef _BACKWARD
+#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_OMP
+      thrust::for_each_n(
+#else
       thrust::for_each_n(thrust::cuda::par.on(stream),
+#endif
                          thrust::counting_iterator<int>(0), height,
                          [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
                          auto row = buffer_begin + n * row_stride;
@@ -144,7 +152,11 @@ void deriche_thrust_pass(
                          }
                          });
 #else
+#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_OMP
+      thrust::for_each_n(
+#else
       thrust::for_each_n(thrust::cuda::par.on(stream),
+#endif
                          thrust::counting_iterator<int>(0), height,
                          [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
                          auto row = buffer_begin + n * row_stride;

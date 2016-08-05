@@ -15,6 +15,12 @@ debug: CXXFLAGS += -g
 debug: NVCCFLAGS += -g
 debug: all
 
+cublas: NVCCFLAGS += -D_CUBLAS_TRANSPOSE
+cublas: time_thrust_deriche
+
+omp: NVCCFLAGS += -Xcompiler -fopenmp -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_OMP -lgomp -g
+omp: time_thrust_deriche
+
 iirfilter: iirfilter.cxx svenpeter_convolve_iir_nosimd.cxx svenpeter_kernel_iir_deriche.cxx 
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
