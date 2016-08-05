@@ -141,8 +141,8 @@ Instead of using possibly wide stencil \\
 \frame{\frametitle{The consequences}
 
 \begin{itemize}
-\item Approximation error: not too important here \\
-    $\to$ result should be visually plausible.
+  \item Approximation error: $\approx 10^{-4}$ $\to$ single
+    precision enough
 
 \item Fixed computational cost: does not depend on scale parameter
 
@@ -152,16 +152,56 @@ result
 }
 
 \begin{frame}
-\frametitle{Original Algorithm}
+\frametitle{Causal and Anticausal pass}
 
 \begin{itemize}
-\item Deriche coefficients \cite{deriche} $\to$ 2 passes: causal and anticausal
+  \item Approximate a one dimensional, causal filter, i.e.
+    \begin{equation}
+      y_i = \sum_{k = 0}^{N-1} h_k x_{i - k}
+    \end{equation}
+  \item Split a one dimensional non causal filter,
+    \begin{equation}
+      y_i = \sum_{k = -M}^{M} h_k x_{i - k}
+    \end{equation}
+    into a causal and anticausal filter, i.e.
+    \begin{equation}
+      h^+_k = \begin{cases}
+        h_k & k \ge 0 \\
+        0 & k < 0
+      \end{cases},
+      \quad
+      h^-_k = \begin{cases}
+        0 & k \ge 0 \\
+        h_k & k < 0
+      \end{cases}
+    \end{equation}
+      
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Horizontal and Vertical pass}
+
+\begin{itemize}
+  \item Approximate those two (anti-)causal filters $\to$ Causal (left to
+    right) and Anticausal (right to left) passes
+  \item Extend to two dimensions: One filter per row (Horizontal pass) and
+    one filter per column (Vertical pass)
+\end{itemize}
+  $\to$ total of $4$ passes: Left-to-right (causal) and right-to-left
+    (anticausal) in each row (horizontal) and top-to-bottom (causal) and
+    bottom-to-top (anticausal) in each column (vertical). Details in
+    \cite{deriche}.
+\end{frame}
+
+\begin{frame}
+\frametitle{Original Algorithm}
+
     \lstinputlisting[firstline=67, lastline=84, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
 \begin{itemize}
 \item $y_i = [x_i,\;x_{i-1},\;x_{i-2},\;x_{i-3}]\cdot\mathbf{c}
 - [y_{i-1},\;y_{i-2},\;y_{i-3},\;y_{i-4}]\cdot\mathbf{d}$ 
-\item anticausal pass and equivalent to causal 
+\item anticausal pass similar to causal 
 \end{itemize}
 \end{frame}
 
