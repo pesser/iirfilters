@@ -33,7 +33,7 @@
 
 \frame{\titlepage} 
 
-\frame{\frametitle{Overview}\tableofcontents} 
+\frame{\frametitle{Overview}\tableofcontents[hideallsubsections]} 
 
 \section{Motivation} 
 \frame{\frametitle{Ilastik}
@@ -218,7 +218,7 @@ result
 \subsection{Overview}
 \frame{\frametitle{Possibilities and challenges}
 \begin{enumerate}
-  \item All rows (columns) independent
+  \item All rows (columns) independent in horizontal (vertical) pass
   \item Causal and anticausal pass independent
   \item Either horizontal or vertical pass will cause bad memory layout
   \item Parallelize recurrence relation within each row
@@ -288,7 +288,7 @@ thrust::for_each_n(
 
 \subsection{Parallelizing causal and anti-causal pass}
 \begin{frame}[fragile]
-\frametitle{Streams}
+\frametitle{Parallelizing causal and anti-causal pass}
 Just run them on two different streams!
   \begin{lstlisting}[basicstyle=\tiny]
 thrust::for_each_n(
@@ -303,7 +303,7 @@ thrust::for_each_n(
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Reducing causality passes}
+  \frametitle{Combining causality passes}
   \begin{itemize}
     \item Synchronize streams
     \item Add causal and anticausal buffers into result
@@ -326,7 +326,7 @@ for(int i = 4; i < width; ++i) {
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Reducing causality passes}
+  \frametitle{Combining causality passes}
   $\implies$ need to reverse anticausal buffer in each row:
   \begin{lstlisting}[basicstyle=\tiny]
 cudaStreamSynchronize(s1);
@@ -356,18 +356,38 @@ thrust::transform(
 
 \subsection{Improving memory access patterns}
 \begin{frame}[fragile]
-  \frametitle{Idea}
+  \frametitle{Horizontal and Vertical memory access patterns}
+  Horizontal pass:
+  \begin{itemize}
+    \item Parallelized over rows
+    \item Two threads working on consecutive rows access strided data
+    \item $\to$ wasted memory bandwidth
+  \end{itemize}
+
+  Vertical pass:
+  \begin{itemize}
+    \item Parallelized over columns
+    \item Two threads working on consecutive columns access consecutive data
+    \item $\to$ fully coalesced memory access
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Idea to improve access pattern}
+  Transpose data instead of performing horizontal pass.
   \begin{enumerate}
+    \item Vertical pass
     \item Transpose
     \item Vertical pass
     \item Transpose
-    \item Horizontal pass
   \end{enumerate}
   But:
   \begin{itemize}
     \item Two additional transpose operations which are non-trivial to
       implement efficiently on GPUs
     \item Additional buffer for transpose operation required
+    \item Assumes either column-major storage or it works on image mirrored
+      along diagonal
   \end{itemize}
 \end{frame}
 
@@ -376,9 +396,7 @@ thrust::transform(
   \begin{itemize}
     \item Even with a simple thrust implementation this achieves speedups
     \item We can avoid the additional buffer by performing the transposition
-      during the addition of the causality buffers ($\implies$ perform
-      vertical pass first, i.e. work on mirror image or assume column major
-      format)
+      during the addition of the causality buffers
     \item Exactly this, adding two transposed matrices, is also implemented
       in cublas!
   \end{itemize}
@@ -395,7 +413,21 @@ cublasSgeam(
   \end{lstlisting}
 \end{frame}
 
-\begin{frame}{Results - Times}
+\section{Results} 
+\begin{frame}{Performance evaluation}
+  The following evaluations were performed on a:
+  \begin{itemize}
+    \item NVIDIA GeForce GTX 980M
+    \item Compute Capability 5.2
+  \end{itemize}
+  and a:
+  \begin{itemize}
+    \item Intel Core i7-4810MQ @ 2.8 Ghz
+    \item Boost up to 3.8 Ghz
+  \end{itemize}
+\end{frame} 
+
+\begin{frame}{Times}
   \begin{columns}
     \begin{column}{7cm}
       \includegraphics[scale=0.4]{imgs/all_times.pdf} 
@@ -409,7 +441,7 @@ cublasSgeam(
   \end{columns}
 \end{frame} 
 
-\begin{frame}{Results - Speedups}
+\begin{frame}{Speedups}
   \begin{columns}
     \begin{column}{7cm}
       \includegraphics[scale=0.4]{imgs/all_speedups.pdf} 
@@ -424,7 +456,7 @@ cublasSgeam(
   \end{columns}
 \end{frame} 
 
-\section{Conclusion} 
+
 \frame{\frametitle{Further considerations}
 Different data and applications need different optimizations.
 Here: Image sequences of approximately 1024x1024 pixels.
@@ -434,13 +466,8 @@ Here: Image sequences of approximately 1024x1024 pixels.
 		within rows pays off for the relatively small number of $1024$ elements.
   \item Multiple features can be calculated concurrently.
   \item Features of multiple images (from a video sequence) can be calculated concurrently.
-\end{itemize}
-}
-
-\frame{\frametitle{Alternatives}
-\begin{itemize}
-  \item Evaluate for which parameters FIR and FFT perform better/worse.
-  \item Alternative parallelization strategy: blocked parallelism.
+  \item Thrust implementation can also run on different backends - e.g.
+    OpenMP
 \end{itemize}
 }
 
