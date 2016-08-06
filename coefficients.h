@@ -5,7 +5,13 @@
 
 /* Pretty much the same as https://github.com/thouis/fastblur.git with some
  * adaptions to use C++ and replacing custom complex numbers with the
- * implementation in the standard library. */
+ * implementation in the standard library. Useage:
+ *
+ *  float sigma = 1.0;
+ *  int order = 4;
+ *  deriche_coeffs<float> c;
+ *  deriche_precomp<float>(&c, sigma, order);
+ * */
 
 /** \brief Minimum Deriche filter order */
 #define DERICHE_MIN_K       2

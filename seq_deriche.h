@@ -3,32 +3,18 @@
 #include <vector>
 #include <stdexcept>
 
-/*
-template <class num>
-void transpose(num* t, num* src, int width_src, int height_src)
-{
-  for(int y = 0; y < height_src; ++y)
-  {
-    for(int x = 0; x < width_src; ++x)
-    {
-      t[x * height_src + y] = src[y * width_src + x];
-    }
-  }
-}
-*/
-
 /**
- * \brief Deriche Gaussian 2D convolution
- * \param c             coefficients precomputed by deriche_precomp()
- * \param dest          output convolved data
- * \param buffer_l      array with at least max(width,height) elements
- * \param buffer_r      array with at least max(width,height) elements
- * \param buffer_m      array with at least width * height elements
- * \param src           data to be convolved
- * \param height        image height
- * \param width         image width
- * \param row_stride        stride along dimension 0 (i.e. &src(i + 1, j) - &src(i, j) = row_stride)
- * \param column_stride     stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
+ * \brief Deriche Gaussian 2D convolution. Only for coefficients of order 4
+ * and data with more than 5 rows and columns.
+ * \param c               coefficients precomputed by deriche_precomp()
+ * \param dest            output convolved data
+ * \param buffer_l        array with at least max(width,height) elements
+ * \param buffer_r        array with at least max(width,height) elements
+ * \param src             data to be convolved
+ * \param height          image height
+ * \param width           image width
+ * \param row_stride      stride along dimension 0 (i.e. &src(i + 1, j) - &src(i, j) = row_stride)
+ * \param column_stride   stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
  */
 template <class num>
 void deriche_seq_2d(
@@ -48,6 +34,7 @@ void deriche_seq_2d(
     for(int y = 0; y < height; ++y, dest_y += row_stride, src_y += row_stride)
     {
       // causal
+      // init
       for(int i = 0; i < 4; ++i)
       {
         buffer_l[i * b_column_stride] = 0;
@@ -56,6 +43,7 @@ void deriche_seq_2d(
         for(int j = 1; j <= i; ++j)
           buffer_l[i * b_column_stride] -= c.a[j] * buffer_l[(i - j) * b_column_stride];
       }
+      // compute
       for(int n = 4; n < width; ++n)
         buffer_l[n * b_column_stride] =
             c.b_causal[0] * src_y[(n - 0) * column_stride]
@@ -67,6 +55,7 @@ void deriche_seq_2d(
           - c.a[3] * buffer_l[(n - 3) * b_column_stride]
           - c.a[4] * buffer_l[(n - 4) * b_column_stride];
       // anticausal
+      // init
       for(int i = 0; i < 4; ++i)
       {
         buffer_r[i * b_column_stride] = 0;
@@ -75,6 +64,7 @@ void deriche_seq_2d(
         for(int j = 1; j <= i; ++j)
           buffer_r[i * b_column_stride] -= c.a[j] * buffer_r[(i - j) * b_column_stride];
       }
+      // compute
       int n, i;
       n = 4;
       i = (width - 1) - n;
