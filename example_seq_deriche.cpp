@@ -5,20 +5,22 @@
 #include <iostream>
 #include <iomanip>
 
+/** Blur image with sequential version. **/
 int main(int argc, char** argv)
 {
   Timer<false> timer;
-  float sigma = 5.0;
+  float sigma = 1.0;
   int order = 4;
 
-  if(argc != 3)
+  if(argc != 4)
   {
     std::cout <<
-      "Useage: " << argv[0] << " <in_png_file> <out_png_file>" << std::endl;
+      "Useage: " << argv[0] << " <sigma> <in_png_file> <out_png_file>" << std::endl;
     return 1;
   }
-  const char* in_filename = argv[1];
-  const char* out_filename = argv[2];
+  sigma = atof(argv[1]);
+  const char* in_filename = argv[2];
+  const char* out_filename = argv[3];
 
   Image img(in_filename);
   std::cout <<
@@ -28,21 +30,19 @@ int main(int argc, char** argv)
   int img_size = img.width() * img.height();
 
   std::vector<float> output(img_size);
-
-  timer.tick();
-  std::vector<float> buffer_l(max_dim);
-  std::vector<float> buffer_r(max_dim);
-  std::vector<float> buffer_m(img_size);
-
   deriche_coeffs<float> c;
   deriche_precomp<float>(&c, sigma, order);
 
+  std::vector<float> buffer_l(max_dim);
+  std::vector<float> buffer_r(max_dim);
+
+  timer.tick();
   deriche_seq_2d<float>(
-      c, output.data(), buffer_l.data(), buffer_r.data(), buffer_m.data(),
-      img.data(), img.width(), img.height());
+      c, output.data(), buffer_l.data(), buffer_r.data(),
+      img.data(), img.height(), img.width());
   double time = timer.tock();
 
-  std::cout << "Filtered in " << time << " ms" << std::endl;
+  std::cout << "Filtered with sigma=" << sigma << " in " << time << " s" << std::endl;
 
   Image img_out(output.data(), img.width(), img.height());
   img_out.write(out_filename);

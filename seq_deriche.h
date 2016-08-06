@@ -8,8 +8,8 @@
  * and data with more than 5 rows and columns.
  * \param c               coefficients precomputed by deriche_precomp()
  * \param dest            output convolved data
- * \param buffer_l        array with at least max(width,height) elements
- * \param buffer_r        array with at least max(width,height) elements
+ * \param buffer_l        array with at least width elements
+ * \param buffer_r        array with at least width elements
  * \param src             data to be convolved
  * \param height          image height
  * \param width           image width
@@ -17,7 +17,7 @@
  * \param column_stride   stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
  */
 template <class num>
-void deriche_seq_2d(
+void deriche_seq_2d_single_pass(
     const deriche_coeffs<num>& c,
     num *dest,
     num *buffer_l,
@@ -27,7 +27,7 @@ void deriche_seq_2d(
     int row_stride, int column_stride)
 {
     assert(dest && buffer_l && buffer_r && src && c.K == 4 && width > 4 && height > 4);
-    const int b_column_stride = 1;
+    const int b_column_stride = 1;  // never stride buffer since it might contain only a single row
     
     num* dest_y = dest;
     const num* src_y = src;
@@ -83,4 +83,41 @@ void deriche_seq_2d(
       for(int n = 0; n < width; ++n)
         dest_y[n * column_stride] = buffer_l[n * b_column_stride] + buffer_r[(width - 1 - n) * b_column_stride];
     }
+}
+
+
+/**
+ * \brief Deriche Gaussian 2D convolution. Only for coefficients of order 4
+ * and data with more than 5 rows and columns. Vertical then horizontal.
+ * \param c               coefficients precomputed by deriche_precomp()
+ * \param dest            output convolved data
+ * \param buffer_l        array with at least max(width,height) elements
+ * \param buffer_r        array with at least max(width,height) elements
+ * \param src             data to be convolved
+ * \param height          image height
+ * \param width           image width
+ * \param row_stride      stride along dimension 0 (i.e. &src(i + 1, j) - &src(i, j) = row_stride)
+ * \param column_stride   stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
+ */
+template <class num>
+void deriche_seq_2d(
+    const deriche_coeffs<num>& c,
+    num *dest,
+    num *buffer_l,
+    num *buffer_r,
+    const num *src, 
+    int height, int width)
+{
+  // vertical
+  deriche_seq_2d_single_pass<num>(
+      c,
+      dest,
+      buffer_l, buffer_r,
+      src, width, height, 1, width);
+  // horizontal
+  deriche_seq_2d_single_pass<num>(
+      c,
+      dest,
+      buffer_l, buffer_r,
+      dest, height, width, width, 1);
 }

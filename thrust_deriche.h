@@ -226,7 +226,8 @@ void deriche_thrust_2d_transpose_pass(
 
 
 /**
- * \brief Deriche Gaussian convolution single 2D pass. Result is transposed.
+ * \brief Deriche Gaussian convolution 2D. Only for order 4 and data larger
+ * than 4 elements in each dimension. Vertical then horizontal.
  * \param c                 coefficients precomputed by deriche_precomp()
  * \param dest_begin        output convolved data
  * \param buffer_l_begin    workspace array with space for at least height * width elements
@@ -234,8 +235,9 @@ void deriche_thrust_2d_transpose_pass(
  * \param src_begin         data to be convolved
  * \param height            dimension 0 of input data
  * \param width             dimension 1 of input data
- * \param row_stride        stride along dimension 0 (i.e. &src(i + 1, j) - &src(i, j) = row_stride)
- * \param column_stride     stride along dimension 1 (i.e. &src(i, j + 1) - &src(i, j) = column_stride)
+ * \param s1                cuda stream
+ * \param s2                cuda stream
+ * \param handle            cublas handle
  */
 template <class T,
   class OutIt, class TmpIt, class InIt>
