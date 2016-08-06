@@ -31,13 +31,15 @@ void print(It begin, It end, int linebreak = 0)
 
 template <class T>
 void assert_same(const std::vector<T>& a, const std::vector<T>& b,
-                 const double TOL = 1e-6)
+                 const double TOL = 1e-4)
 {
   if(a.size() != b.size())
     fail();
   for(unsigned int i = 0; i < a.size(); ++i)
   {
     if(std::abs(a[i] - b[i]) > TOL)
+    {
       fail();
+    }
   }
 }
