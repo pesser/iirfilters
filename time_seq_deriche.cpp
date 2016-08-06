@@ -12,28 +12,17 @@ void compute_seq(std::vector<T>& output, const std::vector<T>& input,
   timer.tick();
   std::vector<T> buffer_l(N);
   std::vector<T> buffer_r(N);
-  std::vector<T> buffer_m(N * N);
   double time_init = timer.tock();
 
   timer.tick();
-  deriche_seq_2d<T>(
-      coeffs,
-      buffer_m.data(),
-      buffer_l.data(), buffer_r.data(),
-      input.data(), N, N, N, 1);
-  double time_horizontal = timer.tock();
-
-  timer.tick();
-  deriche_seq_2d<T>(
-      coeffs,
-      output.data(),
-      buffer_l.data(), buffer_r.data(),
-      buffer_m.data(), N, N, 1, N);
+  deriche_seq_2d<float>(
+      coeffs, output.data(), buffer_l.data(), buffer_r.data(),
+      input.data(), N, N);
   double time_vertical = timer.tock();
 
   std::cout << N << ",";
   std::cout << time_init << ",";
-  std::cout << time_horizontal << ",";
+  std::cout << 0.0 << ",";
   std::cout << time_vertical << ",";
   std::cout << 0.0;
   std::cout << std::endl;

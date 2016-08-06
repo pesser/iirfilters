@@ -56,11 +56,6 @@ void compute_thrust(std::vector<T>& output, const std::vector<T>& input,
 int main(int argc, char** argv)
 {
   typedef float prec_t;
-#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_CUDA
-  std::cout << "# cuda" << std::endl;
-#else
-  std::cout << "# other" << std::endl;
-#endif
 
   float sigma = 5.0;
   int order = 4;
