@@ -82,7 +82,11 @@ void deriche_thrust_pass(
       thrust::for_each_n(
 #endif
                          thrust::counting_iterator<int>(0), height,
-                         [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
+                         [buffer_begin, src_begin, row_stride, column_stride, width, c]
+#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_CUDA
+                         __device__
+#endif
+                         (int n) {
                          auto row = buffer_begin + n * row_stride;
                          auto src = src_begin + n * row_stride;
 
@@ -124,7 +128,11 @@ void deriche_thrust_pass(
       thrust::for_each_n(
 #endif
                          thrust::counting_iterator<int>(0), height,
-                         [buffer_begin, src_begin, row_stride, column_stride, width, c] __device__ (int n) {
+                         [buffer_begin, src_begin, row_stride, column_stride, width, c]
+#if THRUST_DEVICE_SYSTEM==THRUST_DEVICE_SYSTEM_CUDA
+                         __device__
+#endif
+                         (int n) {
                          auto row = buffer_begin + n * row_stride;
                          auto src = src_begin + n * row_stride;
 
