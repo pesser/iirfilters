@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tsvfile="thrust.stats"
+tsvfile="thrust_foreach.stats"
 
 if [ -a $tsvfile ]
 then
@@ -18,8 +18,10 @@ do
     ntimes=100
     nacc=$ntimes
     for i in {1..$ntimes}
-    do
-         out=$(./analyze-iir-thrust $n $n)
+    do  
+         cd ..
+         out=$(./time_thrust_deriche $n $n)
+         cd alternatives
          stringarray=($out)
          time0=${stringarray[0]}
          time1=${stringarray[1]}

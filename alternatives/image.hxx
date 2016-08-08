@@ -5,7 +5,7 @@
 #include <string>
 #include <cmath>
 #include <cassert>
-#include <png++/png.hpp>
+#include <../png++/png.hpp>
 
 #ifndef IMAGE_H
 #define IMAGE_H
