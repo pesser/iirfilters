@@ -154,8 +154,9 @@ Idea:
 \frame{\frametitle{Properties}
 
 \begin{itemize}
-  \item Approximation error of IIR-filters: $\approx 10^{-4}$\\
-    $\to$ single precision enough
+  \item Approximate RMS error of IIR-filters: $10^{-4}$\\
+    $\to$ Implementations may vary approximately to this extent\\
+    $\to$ single precision sufficient
 
   \item Computational cost does not depend on scale parameter\\
     $\to$ Cost is fixed, no filter comparison necessary
@@ -198,7 +199,7 @@ Idea:
 \frametitle{Horizontal and Vertical pass}
 
 \begin{itemize}
-  \item Approximate those two (anti-)causal filters $\to$ Causal (left to
+  \item Approximate those two (anti-)causal filters \\$\to$ Causal (left to
     right) and Anticausal (right to left) passes
   \item Extend to two dimensions: One filter per row (Horizontal pass) and
     one filter per column (Vertical pass)
@@ -428,12 +429,14 @@ cublasSgeam(
   \end{lstlisting}
 \end{frame}
 
-\section{Results} 
+\section{Results}
+\subsection{Performance}
 \begin{frame}{Performance evaluation}
   The following evaluations were performed on a:
   \begin{itemize}
     \item NVIDIA GeForce GTX 980M
     \item Compute Capability 5.2
+    \item Bandwidth: 160 GB/s
   \end{itemize}
   and a:
   \begin{itemize}
@@ -471,12 +474,26 @@ cublasSgeam(
   \end{columns}
 \end{frame} 
 
+\subsection{Alternatives}
+\frame{\frametitle{Experiments: Alternative Implementations (naive)}
+\begin{itemize}
+  \item Using Cuda without Thrust
+  \item Using Thrust's parallel prefix sums
+  \begin{itemize}
+  \item complex because operator needs to be associative \cite{blelloch1990prefix}
+  \end{itemize}
+\end{itemize}
+\begin{figure}
+\includegraphics[scale=0.25]{imgs/performance.png}
+\end{figure}
+$\to$ Pure Cuda approach seems worth pursuing
+}
 
+\subsection{Further Considerations}
 \frame{\frametitle{Further considerations}
 Different data and applications need different optimizations.
 Here: Image sequences of approximately 1024x1024 pixels.
 \begin{itemize}
-	\item Parallelization of higher order recurrence relations is more complicated (because prefix sum operators are required to be associative for parallelization) \cite{blelloch1990prefix}
 	\item It must be evaluated whether a parallelization of the recurrence relation
 		within rows pays off for the relatively small number of $1024$ elements.
   \item Multiple features can be calculated concurrently.
@@ -486,7 +503,6 @@ Here: Image sequences of approximately 1024x1024 pixels.
 \end{itemize}
 }
 
-%\begin{frame}[t, allowframebreaks]
 \begin{frame}[t]
   \frametitle{References}
   \bibliographystyle{amsalpha}
