@@ -15,9 +15,9 @@ do
     total1=0
     totacc=0
     
-    ntimes=100
+    ntimes=10
     nacc=$ntimes
-    for i in {1..$ntimes}
+    for((i=0;i<${ntimes};++i))
     do
          out=$(./analyze-iir-thrust $n $n)
          stringarray=($out)
@@ -25,8 +25,8 @@ do
          time1=${stringarray[1]}
          acc=${stringarray[2]}
 
-         total0=$((total0 + time0))
-         total1=$((total1 + time1))
+         total0=$(bc -l <<< "$total0 + $time0")
+         total1=$(bc -l <<< "$total1 + $time1")
 
          if [ "$acc" = "nan" ]
          then
@@ -37,8 +37,8 @@ do
         
     done
 
-    total0=$((total0/ntimes))
-    total1=$((total1/ntimes))
+    total0=$(bc -l <<< "$total0 / $ntimes")
+    total1=$(bc -l <<< "$total1 / $ntimes")
 
     totacc=$(bc -l <<< "$totacc/$nacc")
     
