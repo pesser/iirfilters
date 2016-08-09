@@ -483,10 +483,22 @@ cublasSgeam(
   \item complex because operator needs to be associative \cite{blelloch1990prefix}
   \end{itemize}
 \end{itemize}
+\begin{columns}
+    \begin{column}{5.5cm}
+      \includegraphics[scale=0.32]{imgs/performance.png}
+    \end{column}
+    \begin{column}{6.5cm}
+     \begin{itemize}
+      \item too much overhead in prefix implementation
+      \item naive Cuda implementation worse than Thrust-Foreach-Version \\
+      $\to$ eliminating Thrust probably will not gain much speedup
+     \end{itemize}
+    \end{column}
+  \end{columns}
 \begin{figure}
-\includegraphics[scale=0.25]{imgs/performance.png}
+
 \end{figure}
-$\to$ Pure Cuda approach seems worth pursuing
+
 }
 
 \subsection{Further Considerations}
@@ -494,8 +506,6 @@ $\to$ Pure Cuda approach seems worth pursuing
 Different data and applications need different optimizations.
 Here: Image sequences of approximately 1024x1024 pixels.
 \begin{itemize}
-	\item It must be evaluated whether a parallelization of the recurrence relation
-		within rows pays off for the relatively small number of $1024$ elements.
   \item Multiple features can be calculated concurrently.
   \item Features of multiple images (from a video sequence) can be calculated concurrently.
   \item Thrust implementation can also run on different backends - e.g.
