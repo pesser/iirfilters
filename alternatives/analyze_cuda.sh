@@ -17,5 +17,4 @@ do
          echo $out >> $tsvfile
          echo $out
     done
-    
 done

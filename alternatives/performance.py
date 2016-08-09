@@ -4,17 +4,17 @@
 import matplotlib.pyplot as plt
 import csv
 
-tsvfiles = ["cuda.stats", "thrust.stats"]
+tsvfiles = ["cuda.stats", "thrust_prefix.stats"]
 labels = ["Pure CUDA", "Thrust with prefix scan"]
 color = ['blue', 'red']
 
 X = []
 for tsvfile in tsvfiles:
     data = {}
-    with open(tsvfile, 'rb') as csvfile:
+    with open(tsvfile, 'r') as csvfile:
         tsvreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
         for row in tsvreader:
-            data[int(row[0])] = [int(row[1])/1000, int(row[2])/1000, float(row[2])]
+            data[int(row[0])] = [float(row[1]), float(row[2]), float(row[2])]
     X.append(data)
 
 

@@ -10,7 +10,6 @@
 #include "convolvegpu.hxx"
 #include "timer.h"
 
-#include <chrono>
 #include <stdlib.h>
 #include <stdio.h>
 
