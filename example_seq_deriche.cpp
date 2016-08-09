@@ -15,7 +15,7 @@ int main(int argc, char** argv)
   if(argc != 4)
   {
     std::cout <<
-      "Useage: " << argv[0] << " <sigma> <in_png_file> <out_png_file>" << std::endl;
+      "Usage: " << argv[0] << " <sigma> <in_png_file> <out_png_file>" << std::endl;
     return 1;
   }
   sigma = atof(argv[1]);

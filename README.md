@@ -11,7 +11,7 @@ between different parallelization approaches can be found in the
 presentation slides (and the different approaches' implementations can be
 found in the commit history).
 
-### Useage
+### Usage
 The repository contains two examples, one test and two programs for timing
 purposes. Calling `make` builds all of them with the `CUDA` backend and
 `make omp` with the `OpenMP` backend (make sure to call `make clean` if you

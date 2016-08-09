@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   if(argc != 2)
   {
     std::cout <<
-      "Useage: " << argv[0] << " <n_rows>" << std::endl;
+      "Usage: " << argv[0] << " <n_rows>" << std::endl;
     return 1;
   }
   int N = atoi(argv[1]);
