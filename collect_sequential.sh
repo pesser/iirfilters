@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-samples=1024
+samples=$((2 * 128))
 
 githash=$(git log --pretty=format:'%h' -n 1)
 exe=time_seq_deriche
@@ -12,7 +12,7 @@ echo "N,PreInit,Horizontal,Vertical,PostInit" > ${log}
 # build
 make $exe
 # collect
-for((N=16;N<=16384;N*=2))
+for((N=128;N<=16384;N*=2))
 do
   for((sample=0;sample<samples;++sample))
   do

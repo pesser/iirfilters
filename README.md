@@ -46,6 +46,10 @@ want to __re__build).
 - `timer.h`: Timer that can be used with and without CUDA, makes sure to
   synchronize with CUDA and returns time in seconds.
 - `utils.h`: Utilities used for debugging and testing.
+- `collect_sequential.sh`: Script to collect timings of sequential
+  implementation for different sizes of input data. Output can be easily
+  read by [pandas](http://pandas.pydata.org/).
+- `collect_thrust.sh`: Same as above for thrust implementation.
 - `alternatives/`: More alternatives for parallelization to be explored.
 - `images/`: Some example images to be used with the examples.
 - `png++/`: [PNG++](http://savannah.nongnu.org/projects/pngpp/) - a C++
