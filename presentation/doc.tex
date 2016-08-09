@@ -485,12 +485,14 @@ cublasSgeam(
 \end{itemize}
 \begin{columns}
     \begin{column}{5.5cm}
-      \includegraphics[scale=0.32]{imgs/performance.png}
+      \includegraphics[scale=0.32]{imgs/performance.png} \\
+      \tiny{\indent CPU: Intel Xeon E5-1620 0 @ 3.60GHz \\
+      \indent GPU: GeForce GTX 480}
     \end{column}
     \begin{column}{6.5cm}
      \begin{itemize}
-      \item too much overhead in prefix implementation
-      \item naive Cuda implementation worse than Thrust-Foreach-Version \\
+      \item Too much overhead in prefix implementation
+      \item Naive Cuda implementation worse than Thrust-Foreach-Version \\
       $\to$ eliminating Thrust probably will not gain much speedup
      \end{itemize}
     \end{column}
