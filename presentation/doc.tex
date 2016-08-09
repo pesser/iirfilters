@@ -210,10 +210,27 @@ Idea:
     \cite{deriche}.
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
 \frametitle{Original Algorithm}
+  \begin{lstlisting}[basicstyle=\tiny]
+// causal pass
+for (unsigned int i = 0; i < n_pixels; ++i) {
+    float sum = 0.0;
 
-    \lstinputlisting[firstline=67, lastline=84, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
+    xtmp[0] = cur_line[i];
+    for (unsigned int j = 0; j < 4; ++j)
+        sum += coefs.n_causal[j] * xtmp[j];
+    for (unsigned int j = 0; j < 4; ++j)
+        sum -= coefs.d[j] * ytmp[j];
+    for (unsigned int j = 3; j > 0; --j) {
+        xtmp[j] = xtmp[j - 1];
+        ytmp[j] = ytmp[j - 1];
+    }
+
+    tmpbfr[i] = sum;
+    ytmp[0] = sum;
+};
+\end{lstlisting}
 \begin{itemize}
   \item $y_i = [x_i,\;x_{i-1},\;x_{i-2},\;x_{i-3}]\cdot\mathbf{n}
   - [y_{i-1},\;y_{i-2},\;y_{i-3},\;y_{i-4}]\cdot\mathbf{d}$ 
@@ -221,13 +238,36 @@ Idea:
 \end{itemize}
 \end{frame}
 
-\begin{frame}
+\begin{frame}[fragile]
 \frametitle{Border Treatment}
 
 \begin{itemize}
   \item Mirroring: $[\ldots,\;x_{2},\;x_{1},\;x_0,\;x_{1},\;x_{2},\;x_{3},\;x_{4},\;x_{5},\;x_{6},\;x_{7},\;x_{8},\ldots]$
 \end{itemize}
-   \lstinputlisting[firstline=47, lastline=65, basicstyle=\tiny]{code/svenpeter_convolve_iir_nosimd.cxx}
+ \begin{lstlisting}[basicstyle=\tiny]
+for (unsigned int i = 0; i < 4; ++i)
+    xtmp[i] = ytmp[i] = 0.0;
+
+// left border
+for (unsigned int i = 0; i < coefs.n_border; ++i) {
+    float sum = 0.0;
+
+    xtmp[0] = cur_line[coefs.n_border - i];
+    for (unsigned int j = 0; j < 4; ++j)
+        sum += coefs.n_causal[j] * xtmp[j];
+    for (unsigned int j = 0; j < 4; ++j)
+        sum -= coefs.d[j] * ytmp[j];
+    for (unsigned int j = 3; j > 0; --j) {
+        xtmp[j] = xtmp[j - 1];
+        ytmp[j] = ytmp[j - 1];
+    }
+
+    ytmp[0] = sum;
+}
+ \end{lstlisting}
+ \begin{itemize}
+  \item Border treatment is not within the scope of this project
+\end{itemize}
 \end{frame}
 
 \section{Parallelization}
