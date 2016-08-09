@@ -9,7 +9,7 @@
 #include "fastfilters.hxx"
 #include "convolvegpu.hxx"
 
-#include <chrono>
+#include "../timer.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -36,6 +36,8 @@ int main( int argc, char* argv[] )
   output_data = (float*) malloc(w*h*sizeof(float));
   seq_output_data = (float*) malloc(w*h*sizeof(float));
 
+  Timer<true> timer;
+
   // create random image
   srand( (unsigned) time(NULL) );
   for( int i=0; i<w*h; ++i )
@@ -47,17 +49,15 @@ int main( int argc, char* argv[] )
   fastfilters::iir::Coefficients coefs( 5.0, 0 );
   
   // time functions
-  cudaDeviceSynchronize();
-  auto begin = std::chrono::high_resolution_clock::now();
+  timer.tick();
   convolve_iir_gpu( input_data, output_data, w, h, coefs);
-  cudaDeviceSynchronize();
-  auto end = std::chrono::high_resolution_clock::now();
-  printf("%d ", (end-begin).count());
+  double time = timer.tock();
+  printf("%f ", time);
 
-  begin = std::chrono::high_resolution_clock::now();
+  timer.tick();
   fastfilters::iir::convolve_iir_inner_single_noavx(input_data, w, h, seq_output_data, coefs );
-  end = std::chrono::high_resolution_clock::now();
-  printf("%d ", (end-begin).count());
+  time = timer.tock();
+  printf("%f ", time);
 
   
   // calculate RMS error
