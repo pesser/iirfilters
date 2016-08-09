@@ -22,6 +22,10 @@
 typedef thrust::tuple<unsigned int, float, float, float, float> InputTuple;
 typedef thrust::tuple<float, float, float, float> FloatTuple;
 
+// Realizes the calculation y[i] = y[i-1]*A[i] + B[i] (Blelloch 93: eq. 1.13).
+// Since y[i-1]*A[i] = A[j]^d for any i,j, A can be saved as constant entries a[i]
+// and a power is given as first entry of x[i].
+// The second to last entry of x[i] hold the values for B[i].
 struct convolve_4
 {
   const FloatTuple d;
@@ -66,7 +70,7 @@ struct convolve_4
       }
 
     // calculate y*A
-    float yA[4]; // y*A
+    float yA[4];
     for( int j=0; j<4; ++j)
       {
         yA[j] = get<1>(y) * A[0][j]
@@ -83,7 +87,7 @@ struct convolve_4
   }
 };
 
-
+// Returns the sum of the second elements of two tuples 
 struct addseconds : public thrust::binary_function<InputTuple, InputTuple, float>
 {
   __host__ __device__
@@ -93,7 +97,7 @@ struct addseconds : public thrust::binary_function<InputTuple, InputTuple, float
   }
 };
 
-
+// Calculates row index from linear index
 struct row_idx : public thrust::unary_function<int, int>
 {
   const int width;
@@ -107,6 +111,8 @@ struct row_idx : public thrust::unary_function<int, int>
   }
 };
 
+
+// Calculates a value B[i] 
 struct make_b: public thrust::unary_function<FloatTuple, float>
 {
   const FloatTuple n;
@@ -123,7 +129,10 @@ struct make_b: public thrust::unary_function<FloatTuple, float>
   }
 };
 
-void convolve_iir_gpu(const float* input, float* output, const unsigned int n_cols, const unsigned int n_rows,
+
+// Transfers data to GPU and back and executes convolution with Thrust's prefix sums 
+void convolve_iir_gpu(const float* input, float* output,
+                      const unsigned int n_cols, const unsigned int n_rows,
                       const fastfilters::iir::Coefficients &coefs )
 {
   cudaSetDevice(0);
