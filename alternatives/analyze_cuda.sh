@@ -13,7 +13,7 @@ for n in `seq 0 20 2000`
 do    
     for((i=0;i<20;i+=1))
     do
-         out=$(./analyze-iir-cuda $n)
+         out=$(./analyze_cuda $n)
          echo $out >> $tsvfile
          echo $out
     done
