@@ -9,7 +9,7 @@ fi
 
 touch $tsvfile
 
-for n in `seq 0 20 2000`
+for n in `seq 20 20 2000`
 do    
     for((i=0;i<20;i+=1))
     do
