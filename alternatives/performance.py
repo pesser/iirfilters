@@ -34,7 +34,7 @@ plt.ylabel("Time in seconds")
 # sequential
 x = X[0][:,0]
 y = X[0][:,2]
-plt.plot(x, y,'k', label="Sequential")
+plt.plot(x, y,'k', label="Original sequential")
 
 # parallel
 for i in range(2):
@@ -48,13 +48,13 @@ x = X[i][:,0]
 y = X[i][:,1] + X[i][:,3]/2.0 + X[i][:,4]
 plt.plot(x, y, color[i], label=labels[i])
 
-"""
+
 i=3
 # seq 2
 x = X[i][:,0]
 y = X[i][:,1] + X[i][:,3]/2.0
 plt.plot(x, y, color[i], label=labels[i])
-"""
+
 plt.ylim([0,0.6])
 plt.xlim([0,2000])
 plt.legend(loc=0)
