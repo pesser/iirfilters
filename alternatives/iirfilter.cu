@@ -4,8 +4,6 @@
 */
 #include "fastfilters.hxx"
 
-#define N_REGISTERS_CONVOLVE_ROW 40 // determine with -Xptxas -v compiler flags
-
 
 __global__ void convolve_row( float* input, float* output, int M, int N, int n_border, 
 			      float* d, float* causal, float* anticausal )
@@ -121,7 +119,7 @@ void convolve_iir_gpu( const float* input, float* output, const unsigned int n_c
   cudaMemcpy( anticausal, coefs.n_anticausal.data(), coefs_size, cudaMemcpyHostToDevice );
 
   cudaGetDeviceProperties( &prop, 0 );
-  n_blocks = ceil( N_REGISTERS_CONVOLVE_ROW * n_rows / (float) prop.regsPerBlock ); 
+  n_blocks = n_rows;
   n_threads_per_block = ceil( n_rows/ (float) n_blocks );
   
   convolve_row<<< n_blocks, n_threads_per_block >>>

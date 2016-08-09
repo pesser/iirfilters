@@ -3,30 +3,33 @@
 
   Usage: ./program width height 
   
-  Output (in ns): time_using_gpu time_using_cpu accuracy 
+  Output (in s): time_using_gpu time_using_cpu 
 */
 
 #include "fastfilters.hxx"
 #include "convolvegpu.hxx"
+#include "timer.h"
 
 #include <chrono>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
-
 
 int main( int argc, char* argv[] )
 {
   // check commandline parameters
-  if( argc != 3 )
+  if( argc != 2 )
     {
-      printf("Usage: ./program width height\n");
+      printf("Usage: ./program N\n");
       exit(0);
     }
-  
+  Timer<true> timer;  
+
   // initialize input parameters
-  int w = atoi(argv[1]);
-  int h = atoi(argv[2]);
+  int N = atoi(argv[1]);
+  int w = N;
+  int h = N;
+  
+  printf("%d,", N);
 
   float* input_data;
   float* output_data;
@@ -47,28 +50,15 @@ int main( int argc, char* argv[] )
   fastfilters::iir::Coefficients coefs( 5.0, 0 );
   
   // time functions
-  cudaDeviceSynchronize();
-  auto begin = std::chrono::high_resolution_clock::now();
-  convolve_iir_gpu( input_data, output_data, w, h, coefs);
-  cudaDeviceSynchronize();
-  auto end = std::chrono::high_resolution_clock::now();
-  printf("%d ", (end-begin).count());
+  timer.tick();
+  convolve_iir_gpu( input_data, output_data, w, h, coefs );
+  double par_time = timer.tock();
+  printf("%f,", par_time);
 
-  begin = std::chrono::high_resolution_clock::now();
+  timer.tick();
   fastfilters::iir::convolve_iir_inner_single_noavx(input_data, w, h, seq_output_data, coefs );
-  end = std::chrono::high_resolution_clock::now();
-  printf("%d ", (end-begin).count());
-
-  
-  // calculate RMS error
-  long double rmse = 0.0;
-  for( int i=0; i<w*h; ++i ) 
-    {
-      rmse += pow( seq_output_data[i] - output_data[i], 2)/(w*h);
-    }
-  printf("%Lf ", rmse);
-  rmse = sqrt(rmse);
-  printf("%Lf", rmse);
+  double seq_time = timer.tock();
+  printf("%f", seq_time);
   
   return 0;
 }

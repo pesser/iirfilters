@@ -1,6 +1,6 @@
 #!/bin/bash
 
-tsvfile="thrust_prefix.stats"
+tsvfile="sequential.stats"
 
 if [ -a $tsvfile ]
 then
@@ -13,7 +13,9 @@ for n in `seq 0 20 2000`
 do    
     for((i=0;i<20;i+=1))
     do
-         out=$(./analyze-iir-thrust $n)
+         cd ..
+         out=$(./time_seq_deriche $n)
+         cd alternatives
          echo $out >> $tsvfile
          echo $out
     done
