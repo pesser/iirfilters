@@ -33,6 +33,7 @@ want to __re__build).
   3. Time for horizontal pass
   4. Time for vertical pass
   5. Time for finalizing (device to host transfer)
+
   Notice that the final version does not use a horizontal pass and columns 3
   and 4 should simply be added together and treated as the compute time.
 - `time_seq_deriche`: Same as above with sequential implementation.
