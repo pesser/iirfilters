@@ -8,7 +8,7 @@ implementation can also be used without `CUDA` enabled devices using the
 [OpenMP backend of
 thrust](https://github.com/thrust/thrust/wiki/Device-Backends). A comparison
 between different parallelization approaches can be found in the
-presentation slides (and the different approaches' implementations can be
+[presentation slides](presentation/doc.pdf) (and the different approaches' implementations can be
 found in the commit history).
 
 ### Usage
